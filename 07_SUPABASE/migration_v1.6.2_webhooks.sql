@@ -1,16 +1,121 @@
 -- ================================================
 -- 세종 OS Supabase 마이그레이션 v1.6.2
--- N8N 웹훅 트리거 (새 레코드 + HMN 결정 알림)
+-- N8N 웹훅 트리거 + WAIT_FOR_SYNC RPC 함수
 -- ================================================
 -- pg_net 확장을 사용하여 INSERT 시 N8N 웹훅 호출
 -- N8N에서 카카오톡 / Discord / 이메일 3채널 알림 발송
+-- WAIT_FOR_SYNC 상태 관리 RPC 함수 포함
 -- ================================================
 
 -- pg_net 확장 활성화 (Supabase에서 기본 제공)
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 
 -- ================================================
--- 1. 새 레코드 생성 → N8N 알림
+-- RPC 1. WAIT_FOR_SYNC 상태 확인/설정
+-- N8N 워크플로우에서 호출: 새 레코드가 WAIT_FOR_SYNC인지 확인
+-- ================================================
+CREATE OR REPLACE FUNCTION ensure_wait_for_sync(
+  p_record_id TEXT
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_record RECORD;
+BEGIN
+  SELECT * INTO v_record FROM records WHERE record_id = p_record_id;
+
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Record not found');
+  END IF;
+
+  -- 이미 WAIT_FOR_SYNC면 확인만
+  IF v_record.status = 'WAIT_FOR_SYNC' THEN
+    RETURN json_build_object(
+      'success', true,
+      'record_id', p_record_id,
+      'status', 'WAIT_FOR_SYNC',
+      'action', 'confirmed'
+    );
+  END IF;
+
+  -- 아직 WAIT_FOR_SYNC가 아니면 상태 업데이트
+  UPDATE records
+  SET status = 'WAIT_FOR_SYNC'
+  WHERE record_id = p_record_id;
+
+  RETURN json_build_object(
+    'success', true,
+    'record_id', p_record_id,
+    'status', 'WAIT_FOR_SYNC',
+    'action', 'updated'
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION ensure_wait_for_sync TO service_role;
+
+-- ================================================
+-- RPC 2. WAIT_FOR_SYNC 해제 (HMN 결정 완료)
+-- N8N 워크플로우에서 호출: HMN 결정 후 상태 업데이트
+-- ================================================
+CREATE OR REPLACE FUNCTION complete_wait_for_sync(
+  p_record_id TEXT,
+  p_decision TEXT,
+  p_memo TEXT DEFAULT NULL
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_record RECORD;
+BEGIN
+  SELECT * INTO v_record FROM records WHERE record_id = p_record_id;
+
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Record not found');
+  END IF;
+
+  -- 결정값 유효성 검증
+  IF p_decision NOT IN ('APPROVED', 'REJECTED', 'HOLD') THEN
+    RETURN json_build_object('success', false, 'error', 'Invalid decision');
+  END IF;
+
+  -- WAIT_FOR_SYNC 상태가 아니면 이미 처리된 것
+  IF v_record.status != 'WAIT_FOR_SYNC' THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Record not in WAIT_FOR_SYNC state',
+      'current_status', v_record.status
+    );
+  END IF;
+
+  -- records 상태 업데이트: WAIT_FOR_SYNC → APPROVED/REJECTED/HOLD
+  UPDATE records
+  SET status = p_decision,
+      hmn_memo = p_memo,
+      decided_at = NOW()
+  WHERE record_id = p_record_id;
+
+  RETURN json_build_object(
+    'success', true,
+    'record_id', p_record_id,
+    'previous_status', 'WAIT_FOR_SYNC',
+    'new_status', p_decision,
+    'action', 'completed'
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION complete_wait_for_sync TO service_role;
+
+-- ================================================
+-- 트리거 1. 새 레코드 생성 → N8N 알림
+-- records INSERT → WAIT_FOR_SYNC 파이프라인 시작
 -- ================================================
 CREATE OR REPLACE FUNCTION notify_new_record()
 RETURNS TRIGGER
@@ -23,10 +128,9 @@ DECLARE
   v_payload JSONB;
   v_level_label TEXT;
 BEGIN
-  -- N8N 웹훅 URL (Supabase Vault 또는 환경변수에서 가져오기)
-  -- 설정 방법: Supabase SQL Editor에서 아래 실행
-  --   INSERT INTO vault.secrets (name, secret)
-  --   VALUES ('n8n_new_record_webhook', 'https://your-n8n.app.n8n.cloud/webhook/xxx');
+  -- N8N 웹훅 URL (Supabase Vault에서 가져오기)
+  -- 설정: INSERT INTO vault.secrets (name, secret)
+  --       VALUES ('n8n_new_record_webhook', 'https://your-n8n.app.n8n.cloud/webhook/sejong-new-record');
   SELECT decrypted_secret INTO v_webhook_url
   FROM vault.decrypted_secrets
   WHERE name = 'n8n_new_record_webhook'
@@ -62,7 +166,7 @@ BEGIN
     'approve_url', 'https://sejong-ai-os.vercel.app/approve'
   );
 
-  -- N8N 웹훅 비동기 호출
+  -- N8N 웹훅 비동기 호출 → WAIT_FOR_SYNC 파이프라인 시작
   PERFORM net.http_post(
     url := v_webhook_url,
     body := v_payload::TEXT,
@@ -82,7 +186,8 @@ CREATE TRIGGER trg_notify_new_record
   EXECUTE FUNCTION notify_new_record();
 
 -- ================================================
--- 2. HMN 결정 → N8N 알림
+-- 트리거 2. HMN 결정 → N8N 알림
+-- hmn_decisions INSERT → WAIT_FOR_SYNC 해제 파이프라인 시작
 -- ================================================
 CREATE OR REPLACE FUNCTION notify_hmn_decision()
 RETURNS TRIGGER
@@ -145,7 +250,7 @@ BEGIN
     'approve_url', 'https://sejong-ai-os.vercel.app/approve'
   );
 
-  -- N8N 웹훅 비동기 호출
+  -- N8N 웹훅 비동기 호출 → WAIT_FOR_SYNC 해제 파이프라인 시작
   PERFORM net.http_post(
     url := v_webhook_url,
     body := v_payload::TEXT,

@@ -2,19 +2,67 @@
 
 세종 OS Supabase ↔ N8N 3채널 알림 (카카오톡 / Discord / 이메일)
 
+**핵심: WAIT_FOR_SYNC 기반 파이프라인**
+
 ---
 
 ## 아키텍처
 
 ```
-[Supabase]                    [N8N Cloud]               [알림 채널]
-records INSERT ──► pg_net ──► Webhook 1 ──► 메시지 포맷 ──┬─► Discord
-                                                         ├─► 카카오톡
-                                                         └─► 이메일
+워크플로우 1: AI 요청 파이프라인 (WAIT_FOR_SYNC)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-hmn_decisions INSERT ──► pg_net ──► Webhook 2 ──► 메시지 포맷 ──┬─► Discord
-                                                                ├─► 카카오톡
-                                                                └─► 이메일
+[Supabase]              [N8N Cloud]                        [알림]
+records INSERT
+    │
+    ▼
+pg_net ──────► 1. 웹훅 수신
+                   │
+                   ▼
+               2. WAIT_FOR_SYNC 확인 (RPC)
+                   │
+                   ▼
+               3. 메시지 포맷
+                   │
+                   ▼
+               4. 3채널 알림 발송 ──────► Discord
+                   │                      카카오톡
+                   │                      이메일
+                   ▼
+               5. HMN 응답 대기 (Wait 노드)  ← ← ← ← ← ← ┐
+                   │                                        │
+                   ▼                                        │
+               (HMN이 승인 페이지에서 결정)                    │
+                   │                                        │
+                   ▼                                        │
+               6. Supabase 상태 업데이트                      │
+                   │    (WAIT_FOR_SYNC → APPROVED/REJECTED)  │
+                   ▼                                        │
+               7. 결정 결과 포맷                               │
+                   │                                        │
+                   ▼                                        │
+               8. 3채널 결과 알림 ──────► Discord              │
+                                         카카오톡             │
+                                         이메일               │
+                                                             │
+워크플로우 2: HMN 결정 Resume (WAIT_FOR_SYNC 해제)              │
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━              │
+                                                             │
+hmn_decisions INSERT                                         │
+    │                                                        │
+    ▼                                                        │
+pg_net ──────► 1. HMN 결정 웹훅 수신  ── (resume) ── ── ── ── ┘
+                   │
+                   ▼
+               2. WAIT_FOR_SYNC 해제 (RPC)
+                   │    (WAIT_FOR_SYNC → APPROVED/REJECTED/HOLD)
+                   ▼
+               3. 결과 메시지 포맷
+                   │
+                   ▼
+               4. 3채널 결과 알림 ──────► Discord
+                                         카카오톡
+                                         이메일
 ```
 
 ---
@@ -23,11 +71,11 @@ hmn_decisions INSERT ──► pg_net ──► Webhook 2 ──► 메시지 �
 
 1. N8N 인스턴스 열기: `https://msm79499.app.n8n.cloud`
 2. **Workflows** → **Import from File**
-3. `08_N8N/workflow_new_record_alert.json` import
-4. `08_N8N/workflow_hmn_decision_alert.json` import
+3. `08_N8N/workflow_new_record_alert.json` import → AI 요청 파이프라인
+4. `08_N8N/workflow_hmn_decision_alert.json` import → HMN 결정 Resume
 5. 각 워크플로우에서 **Webhook** 노드 클릭 → **Webhook URL** 복사
-   - 형식: `https://msm79499.app.n8n.cloud/webhook/sejong-new-record`
-   - 형식: `https://msm79499.app.n8n.cloud/webhook/sejong-hmn-decision`
+   - 워크플로우 1: `https://msm79499.app.n8n.cloud/webhook/sejong-new-record`
+   - 워크플로우 2: `https://msm79499.app.n8n.cloud/webhook/sejong-hmn-decision`
 
 ---
 
@@ -37,10 +85,14 @@ N8N 인스턴스 → **Settings** → **Variables**에 추가:
 
 | 변수명 | 값 | 설명 |
 |--------|-----|------|
+| `SUPABASE_URL` | `https://neexjnidnaopukhsdmhz.supabase.co` | Supabase 프로젝트 URL |
+| `SUPABASE_SERVICE_KEY` | `eyJ...` | Supabase service_role key (Settings → API) |
 | `DISCORD_WEBHOOK_URL` | `https://discord.com/api/webhooks/...` | Discord 서버 웹훅 URL |
 | `KAKAO_WEBHOOK_URL` | `https://kapi.kakao.com/v2/api/talk/memo/default/send` | 카카오톡 API URL |
 | `NOTIFICATION_EMAIL` | `msm7949@gmail.com` | 알림 수신 이메일 |
 | `SMTP_FROM_EMAIL` | `noreply@sejong-os.kr` | 발신 이메일 주소 |
+
+> ⚠️ `SUPABASE_SERVICE_KEY`는 WAIT_FOR_SYNC RPC 호출에 필요합니다. service_role key를 사용하세요.
 
 ---
 
@@ -115,7 +167,11 @@ VALUES
 
 Supabase SQL Editor에서 `07_SUPABASE/migration_v1.6.2_webhooks.sql` 전체 실행.
 
-이렇게 하면 `records` INSERT 시, `hmn_decisions` INSERT 시 자동으로 N8N 웹훅이 호출됩니다.
+이 마이그레이션에는:
+- `ensure_wait_for_sync` RPC — WAIT_FOR_SYNC 상태 확인/설정
+- `complete_wait_for_sync` RPC — WAIT_FOR_SYNC 해제 (HMN 결정 후)
+- `trg_notify_new_record` 트리거 — records INSERT 시 N8N 호출
+- `trg_notify_hmn_decision` 트리거 — hmn_decisions INSERT 시 N8N 호출
 
 ---
 
@@ -125,6 +181,7 @@ Supabase SQL Editor에서 `07_SUPABASE/migration_v1.6.2_webhooks.sql` 전체 실
 2. Supabase SQL Editor에서 테스트 레코드 삽입:
 
 ```sql
+-- 테스트: 새 레코드 삽입 → N8N 워크플로우 1 발동
 INSERT INTO records (record_id, ai_code, level, mode, title, content)
 VALUES (
   'SEJONG-DVN-20260425-TEST-001',
@@ -134,16 +191,17 @@ VALUES (
 );
 ```
 
-3. Discord / 카카오톡 / 이메일에 알림이 오는지 확인
+3. Discord / 카카오톡 / 이메일에 **WAIT_FOR_SYNC** 알림이 오는지 확인
+4. 승인 페이지에서 결정 → **결정 완료** 알림이 오는지 확인
 
 ---
 
 ## 알림 메시지 예시
 
-### Discord — 새 레코드
+### Discord — WAIT_FOR_SYNC (새 레코드)
 ```
-🆕 새 AI 요청 — HMN 결정 필요
-━━━━━━━━━━━━━━━━━━━━
+⏳ WAIT_FOR_SYNC — HMN 결정 대기
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 L1 Critical 🔴
 
 CORE v1.6 철학 섹션 — 홍익인간 정의 수정
@@ -152,13 +210,14 @@ CORE v1.6 철학 섹션 — 홍익인간 정의 수정
 
 📋 SEJONG-CLD-20260425-143022-001
 🤖 AI: CLD | 모드: DEV
+⏳ 상태: WAIT_FOR_SYNC — HMN 결정 대기 중
 🔗 승인 페이지 열기
 ```
 
-### Discord — HMN 결정
+### Discord — WAIT_FOR_SYNC 해제 (HMN 결정)
 ```
-🏛️ HMN 결정 완료
-━━━━━━━━━━━━━━━━━━━━
+🏛️ HMN 결정 완료 — WAIT_FOR_SYNC 해제
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ 승인 — L1 Critical
 
 CORE v1.6 철학 섹션 — 홍익인간 정의 수정
@@ -168,6 +227,7 @@ CORE v1.6 철학 섹션 — 홍익인간 정의 수정
 📋 SEJONG-CLD-20260425-143022-001
 🤖 AI: CLD | 모드: DEV
 👤 결정자: HMN
+✅ WAIT_FOR_SYNC → APPROVED
 ```
 
 ---
@@ -178,7 +238,9 @@ CORE v1.6 철학 섹션 — 홍익인간 정의 수정
 |------|------|
 | 웹훅 호출 안 됨 | Supabase → Extensions에서 `pg_net` 활성화 확인 |
 | vault 접근 오류 | Supabase에서 Vault 기능 활성화 필요 (Settings → Vault) |
+| WAIT_FOR_SYNC RPC 실패 | N8N 환경변수 `SUPABASE_SERVICE_KEY`가 service_role key인지 확인 |
 | Discord 알림 안 옴 | 웹훅 URL 정확한지 확인, N8N 워크플로우 Active 상태 확인 |
+| Wait 노드 timeout | N8N 무료 플랜 실행 시간 제한 확인 — timeout 설정 조정 |
 | 카카오톡 토큰 만료 | Access Token 갱신 (Refresh Token 사용) |
 | 이메일 발송 실패 | Gmail 앱 비밀번호 확인, SMTP 포트 465 사용 |
 | N8N 실행 수 부족 | 무료 플랜 2,500건/월 — Upgrade 필요 시 확인 |
@@ -188,13 +250,15 @@ CORE v1.6 철학 섹션 — 홍익인간 정의 수정
 ## N8N 환경변수 총정리
 
 ```
+SUPABASE_URL=https://neexjnidnaopukhsdmhz.supabase.co
+SUPABASE_SERVICE_KEY=eyJ...  (service_role key)
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 KAKAO_WEBHOOK_URL=https://kapi.kakao.com/...
 NOTIFICATION_EMAIL=msm7949@gmail.com
 SMTP_FROM_EMAIL=noreply@sejong-os.kr
 ```
 
-## Supabase 환경변수 (Vault)
+## Supabase Vault 시크릿
 
 ```sql
 -- vault.secrets 테이블에 저장

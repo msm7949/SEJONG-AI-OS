@@ -4,13 +4,20 @@
 
 ---
 
-## ✅ 구현 완료
+## ✅ 구현 완료 (WAIT_FOR_SYNC 포함)
 
-| 워크플로우 | 파일 | 상태 |
-|-----------|------|------|
-| 새 레코드 → 3채널 알림 | `workflow_new_record_alert.json` | 구현 완료 |
-| HMN 결정 → 3채널 알림 | `workflow_hmn_decision_alert.json` | 구현 완료 |
-| Supabase 웹훅 트리거 | `07_SUPABASE/migration_v1.6.2_webhooks.sql` | 구현 완료 |
+| 워크플로우 | 파일 | 플로우 | 상태 |
+|-----------|------|--------|------|
+| AI 요청 파이프라인 | `workflow_new_record_alert.json` | 웹훅→WAIT_FOR_SYNC→알림→HMN대기→완료 | 구현 완료 |
+| HMN 결정 Resume | `workflow_hmn_decision_alert.json` | 웹훅→WAIT_FOR_SYNC 해제→결정 알림 | 구현 완료 |
+| Supabase 트리거+RPC | `07_SUPABASE/migration_v1.6.2_webhooks.sql` | 트리거+ensure/complete RPC | 구현 완료 |
+
+**핵심:** WAIT_FOR_SYNC 상태가 N8N 워크플로우의 중심. 모든 레코드는 WAIT_FOR_SYNC를 거쳐야 HMN 결정 가능.
+
+```
+[새 레코드] → WAIT_FOR_SYNC 확인 → 3채널 알림 → HMN 대기(Wait) → 결정 수신 → 완료
+[HMN 결정] → WAIT_FOR_SYNC 해제 → 3채널 결과 알림
+```
 
 알림 채널: **카카오톡 + Discord + 이메일** (3채널 동시 발송)
 
