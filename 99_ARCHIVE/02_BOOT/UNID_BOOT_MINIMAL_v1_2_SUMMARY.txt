@@ -1,0 +1,14 @@
+SEJONG-AI-OS BOOT MINIMAL v1.2 SUMMARY
+==============================
+
+Added in v1.2
+- constitutional_values block
+- cultural_inspiration block
+- stronger SEJONG-AI-OS_principle wording
+
+Core sentence
+AI is an extension of humans, a tool and a collaborator.
+
+Purpose
+Use minimal boot loading while preserving philosophy, constitutional values,
+and cultural background for new sessions.

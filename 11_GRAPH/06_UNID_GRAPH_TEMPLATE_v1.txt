@@ -1,0 +1,85 @@
+SEJONG-AI-OS GRAPH TEMPLATE
+
+Graph ID
+GRAPH-YYYYMMDD-HHMMSS
+
+Example
+GRAPH-20260316-212500
+
+
+Graph Title
+Short title of the graph.
+
+
+Date
+YYYY-MM-DD
+
+
+Time
+HH:MM
+
+
+Human
+Human participant / Router
+
+
+AI Node
+GPT / Claude / Gemini / etc
+
+
+Graph Purpose
+Why this graph exists.
+
+
+Main Node
+The main record or idea.
+
+
+Connected Nodes
+List of related records.
+
+Example
+- SEJONG-AI-OS-20260316-211530-GPT
+- SEJONG-AI-OS-20260316-211700-CLD
+- SEJONG-AI-OS-20260316-211820-GEM
+
+
+Connection Type
+Support
+Extension
+Critique
+Alternative
+Reference
+Merge
+
+
+Graph Summary
+Short description of how records connect.
+
+
+Reasoning Path
+Describe the flow of reasoning.
+
+Example
+Seed concept
+→ Human–AI collaboration
+→ Knowledge Tree
+→ Knowledge Forest
+
+
+Knowledge Value
+Why this graph matters.
+
+
+Status
+Draft
+Verified
+Archived
+
+
+Notes
+Additional comments.
+
+
+SEJONG-AI-OS_GRAPH_TEMPLATE_v1.txt
+

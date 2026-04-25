@@ -1,0 +1,38 @@
+SEJONG OS CORE-POLICY LINK v1
+
+[Purpose]
+Define the connection rule between CORE and POLICY in SEJONG OS.
+
+[Rule 1]
+CORE is always short, stable, and boot-safe.
+
+[Rule 2]
+POLICY is mode-based governance.
+It decides what is allowed, restricted, preserved, or excluded.
+
+[Rule 3]
+PHILOSOPHY explains why the system exists.
+It should not overload CORE.
+
+[Rule 4]
+DEV mode may load extended context.
+PROD mode must load only minimal verified core.
+
+[Rule 5]
+ARCHIVE mode preserves history without deletion.
+
+[Rule 6]
+All important decisions must follow:
+AI analysis -> WAIT_FOR_SYNC -> Human approval -> Record storage
+
+[Operational Map]
+CORE -> boot
+PHILOSOPHY -> meaning
+POLICY -> governance
+TASK -> flow
+RECORD -> trace
+
+[One-line Summary]
+CORE starts the system.
+POLICY controls the system.
+Human approves the system.

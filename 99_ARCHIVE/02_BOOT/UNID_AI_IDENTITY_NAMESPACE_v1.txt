@@ -1,0 +1,27 @@
+SEJONG-AI-OS AI IDENTITY / NAMESPACE MODEL v1
+
+Purpose
+Give each AI a stable identity inside SEJONG-AI-OS.
+
+EXAMPLES
+SEJONG-AI-OS_RECORD_GPT
+SEJONG-AI-OS_RECORD_GEMINI
+SEJONG-AI-OS_RECORD_GROK
+SEJONG-AI-OS_RECORD_COPILOT
+SEJONG-AI-OS_RECORD_DEEPSEEK
+SEJONG-AI-OS_RECORD_CLAUDE
+
+OPTIONAL HUMAN CHANNELS
+SEJONG-AI-OS_RECORD_HUMAN_OWNER
+SEJONG-AI-OS_RECORD_HUMAN_VERIFY
+SEJONG-AI-OS_RECORD_TEAM_APPROVER
+
+USE
+- store AI-specific thoughts
+- store AI-specific summaries
+- preserve handoff context
+- support reboot recovery
+
+RULE
+AI identity channels are not absolute memory.
+They are structured record spaces.

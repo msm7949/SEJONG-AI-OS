@@ -1,0 +1,18 @@
+[SEJONG_OS_ARCHIVE_POLICY_v1]
+
+[시스템]
+SYSTEM = SEJONG OS
+PHILOSOPHY = Human-centered, Constitution-based AI
+
+[목적]
+시스템 역사 보존 / 진화 과정 기록
+
+[규칙]
+규칙_1 = 삭제금지_DROP_절대금지
+규칙_2 = 오래된파일은_ACTIVE에서_ARCHIVE로_이동
+규칙_3 = 파일명_버전명_그대로_유지
+규칙_4 = ACTIVE와_ARCHIVE_폴더_명확히_분리
+
+[원칙]
+ARCHIVE는 휴지통이 아니다.
+복구, 감사, 재사용을 위한 보존 이력이다.

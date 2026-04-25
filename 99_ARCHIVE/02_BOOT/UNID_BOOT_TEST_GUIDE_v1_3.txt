@@ -1,0 +1,21 @@
+
+SEJONG-AI-OS BOOT TEST GUIDE v1.3
+=========================
+
+Purpose
+Test whether different AI systems understand the SEJONG-AI-OS philosophy and system structure.
+
+Steps
+1. Open a new AI session
+2. Paste SEJONG-AI-OS BOOT TEMPLATE
+3. Ask the AI:
+
+   - What is the SEJONG-AI-OS system?
+   - What are the core principles?
+   - Why are AI, Human, Record, and Collaboration included?
+   - Why are constitutional values and culture included?
+
+Success Criteria
+- AI understands SEJONG-AI-OS as a human-centered AI collaboration system
+- AI recognizes the importance of Record and Verification
+- AI identifies philosophy, culture, and constitutional values as guidance

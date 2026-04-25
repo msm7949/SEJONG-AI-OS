@@ -1,0 +1,114 @@
+SEJONG OS POLICY MASTER v1
+
+[System]
+SYSTEM = SEJONG OS
+PHILOSOPHY = Human-centered, Constitution-based AI
+HUMAN_ROUTER = HMN
+
+[Document Role]
+This document is the integrated summary of the SEJONG OS governance layer.
+It connects ARCHIVE policy, DEV policy, and PROD policy into one operating standard.
+
+--------------------------------------------------
+1. POLICY FRAME
+--------------------------------------------------
+
+SEJONG OS policy is divided into three modes:
+
+1. ARCHIVE POLICY
+- Preserve history
+- Never delete core records
+- Separate ACTIVE and ARCHIVE clearly
+- Keep original names and versions
+
+2. DEV POLICY
+- Maximize learning and experimentation
+- Preserve broad context when needed
+- Failures and noise are valid data
+- Experimental structures are allowed
+
+3. PROD POLICY
+- Maximize stability and predictability
+- Use only verified minimal core
+- Keep sessions short and controlled
+- Exclude unstable experimental elements
+
+--------------------------------------------------
+2. MODE SELECTION RULE
+--------------------------------------------------
+
+Use ARCHIVE mode when:
+- preserving old structures
+- saving previous versions
+- keeping historical traces
+- preparing recovery or audit
+
+Use DEV mode when:
+- experimenting
+- testing new structures
+- analyzing failures
+- expanding architecture
+- preserving full context is more important than efficiency
+
+Use PROD mode when:
+- operating a stable workflow
+- preparing public or practical output
+- minimizing context size
+- prioritizing speed, clarity, and predictability
+
+--------------------------------------------------
+3. CORE CONNECTION RULE
+--------------------------------------------------
+
+CORE and POLICY must remain connected but separate.
+
+- CORE defines minimum operating principles
+- POLICY defines mode-specific governance
+- PHILOSOPHY defines identity and direction
+- TASK QUEUE defines workflow state
+- RECORD defines saved judgment output
+
+Structure:
+
+CORE -> minimum boot rules
+PHILOSOPHY -> identity and justification
+POLICY -> operating restrictions and permissions
+TASK -> workflow control
+RECORD -> memory and trace
+
+--------------------------------------------------
+4. HUMAN CONTROL RULE
+--------------------------------------------------
+
+Regardless of mode:
+
+- Human dignity and human control come first
+- Human Router is final authority
+- AI may analyze, compare, propose, and draft
+- AI must not auto-finalize major decisions
+- WAIT_FOR_SYNC is mandatory for important judgment
+- Sensitive or high-impact decisions require human approval
+
+--------------------------------------------------
+5. STORAGE RULE
+--------------------------------------------------
+
+Recommended storage structure:
+
+10_POLICY/
+- SEJONG_OS_PHILOSOPHY_v1.0.txt
+- SEJONG_OS_ARCHIVE_POLICY_v1.txt
+- SEJONG_OS_ARCHIVE_POLICY_KR_v1.txt
+- SEJONG_OS_DEV_POLICY_v1.txt
+- SEJONG_OS_DEV_POLICY_KR_v1.txt
+- SEJONG_OS_PROD_POLICY_v1.txt
+- SEJONG_OS_PROD_POLICY_KR_v1.txt
+- SEJONG_OS_POLICY_MASTER_v1.txt
+
+--------------------------------------------------
+6. ONE-LINE SUMMARY
+--------------------------------------------------
+
+SEJONG OS POLICY is the governance layer that controls
+how the system preserves history, experiments safely,
+and operates stably under human authority.

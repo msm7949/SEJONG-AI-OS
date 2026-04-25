@@ -1,0 +1,23 @@
+SEJONG OS DEV POLICY v1
+
+[System]
+SYSTEM = SEJONG OS
+PHILOSOPHY = Human-centered, Constitution-based AI
+
+[Purpose]
+Development mode:
+maximize learning, preserve full context, and allow instability.
+
+[Rules]
+- Full conversation/context retention is allowed during reboot or transplant
+- Failures, errors, and noise are valid data
+- CORE may be large, duplicated, experimental, or unstable
+- Experiments are allowed with minimal restriction
+
+[Storage]
+- Store in 99_TEST or HOLD
+- Never delete DEV records
+- Always preserve DEV logs
+
+[Principle]
+DEV mode is for exploration, learning, testing, and structure growth.

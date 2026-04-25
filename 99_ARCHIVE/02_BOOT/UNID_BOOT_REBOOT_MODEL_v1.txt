@@ -1,0 +1,30 @@
+SEJONG-AI-OS BOOT / REBOOT MODEL v1
+
+Purpose
+Define how AI sessions initialize, reset, and reload project context.
+
+Core Need
+Different AI systems lose session memory or reboot independently.
+SEJONG-AI-OS therefore needs a shared boot structure.
+
+BOOT FLOW
+1. Load SEJONG-AI-OS Master Identity
+2. Load SEJONG-AI-OS Core Philosophy
+3. Load SEJONG-AI-OS System Architecture
+4. Load SEJONG-AI-OS Memory Model
+5. Load SEJONG-AI-OS Record Schema
+6. Load current active task context
+7. Load AI-specific record channel if available
+8. Start AI Forum / Router participation
+
+REBOOT FLOW
+If an AI session resets:
+1. Reload Boot File
+2. Reload latest SEJONG-AI-OS Record summaries
+3. Reload active discussion topic
+4. Reload prior Human Verify decision if any
+5. Continue from last saved state
+
+RULE
+No AI should rely only on temporary chat memory.
+SEJONG-AI-OS shared records are the source of continuity.

@@ -1,0 +1,61 @@
+SEJONG-AI-OS RECORD SCHEMA v2
+
+Purpose
+Extend SEJONG-AI-OS records with authorship, summarization, and handoff fields.
+
+CORE FIELDS
+record_SEJONG-AI-OS
+record_type
+topic
+question
+participants
+responses
+summary
+decision
+human_verify
+timestamp
+tags
+archive_level
+source_reference
+
+NEW FIELDS
+author
+summary_writer
+handoff_sender
+handoff_receiver
+ai_namespace
+related_ai_records
+active_context_id
+
+FIELD MEANING
+author
+- who created the record
+
+summary_writer
+- who wrote the summary
+
+handoff_sender
+- who passed the record onward
+
+handoff_receiver
+- target AI or human reviewer
+
+ai_namespace
+- record ownership scope
+  Example: SEJONG-AI-OS_RECORD_GPT
+
+related_ai_records
+- linked AI channels
+  Example: SEJONG-AI-OS_RECORD_GEMINI, SEJONG-AI-OS_RECORD_VERIFY
+
+active_context_id
+- current task / thread continuity id
+
+EXAMPLE
+record_SEJONG-AI-OS: SEJONG-AI-OS-RECORD-0042
+author: GPT
+summary_writer: GPT
+handoff_sender: GPT
+handoff_receiver: Gemini
+ai_namespace: SEJONG-AI-OS_RECORD_GPT
+related_ai_records: SEJONG-AI-OS_RECORD_GEMINI, SEJONG-AI-OS_FORUM_RECORD

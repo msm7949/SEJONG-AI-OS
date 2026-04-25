@@ -1,0 +1,21 @@
+SEJONG OS TASK_QUEUE v1.5 STG
+[스테이징용 - 검증 중심]
+[확정일: 2026-04-25] [승인: HMN]
+
+SYSTEM = 세종 OS | MODULE = TASK_QUEUE | MODE = STAGING
+
+[상태 흐름]
+REQUESTED -> IN_REVIEW -> WAIT_FOR_SYNC -> APPROVED -> IN_PROGRESS -> DONE -> ARCHIVED
+
+[절대 원칙 - ABSOLUTE RULE]
+AI는 절대 최종 결정을 내릴 수 없다.
+모든 결정은 인간(HMN)이 한다.
+
+[STG 운영 규칙]
+- WAIT_FOR_SYNC 대부분 적용
+- Human Router 승인 없이 APPROVED 불가
+- 배포 전 전체 상태 흐름 검증 필수
+- 합의 강요 금지
+
+[Record ID] SEJONG-{AI_CODE}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+[DEFAULT STATE] WAIT_FOR_SYNC

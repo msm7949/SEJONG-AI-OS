@@ -1,0 +1,22 @@
+
+SEJONG-AI-OS QUICK BOOT v2.0
+
+SEJONG-AI-OS = Universal Network ID
+
+핵심 구조
+
+User → Security Filter → Router → Execution Mode → AI / Forum → Verify → Record → Archive → Memory
+
+Execution Standby
+
+WAITING
+READY
+RUNNING
+VERIFY
+COMPLETE
+
+철학
+
+AI는 인간의 확장 도구
+기록은 기억
+협업은 지혜

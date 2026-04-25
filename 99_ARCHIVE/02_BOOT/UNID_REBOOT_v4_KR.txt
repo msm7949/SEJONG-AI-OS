@@ -1,0 +1,76 @@
+SEJONG-AI-OS_REBOOT_v4_KR
+
+1 작성자
+SEJONG-AI-OS / Human Router 상훈 / GEM / GPT / GRK 통합 설계
+
+2 문서 정의
+본 문서는 SEJONG-AI-OS REBOOT v3를 기반으로,
+Brain Layer 집단지성 숙의 결과를 반영한 v4 커널 명세서이다.
+
+핵심 진화
+- 합의 실패 프로토콜 추가
+- 기록 귀속(origin_record_id) 표준화
+- Context Compression 도입
+- Execution Impact 평가 추가
+
+한 줄 정의
+SEJONG-AI-OS v4는 “기록·숙의·승인·압축”이 통합된 소버린 AI 운영 커널이다.
+
+==================================================
+1. REBOOT 목적
+==================================================
+REBOOT는 단순 초기화가 아니라,
+CORE / ROUTER / RECORD / CONTEXT를 동기화하는 프로토콜이다.
+
+==================================================
+2. 신규 핵심 프로토콜
+==================================================
+
+[1] Consensus Failure Protocol
+- 숙의 실패 시 다수결 금지
+- 모든 AI 최종 논거를 Table로 정리
+- 상태: VERIFY_PENDING
+- Human Router 판정 대기
+
+[2] Record Attribution Protocol
+- 모든 실행 결과는 origin_record_id 필수
+- trace_id 연결 권장
+- 코드/문서/명령에 메타데이터 포함
+
+[3] Context Compression Protocol
+- 10개 Record → 1개 Index Node
+- REBOOT 시 Index 우선 로드
+- 원본 Record는 Archive 유지
+
+[4] Execution Impact Protocol
+- 실행 전 impact_summary 생성
+- 영향 범위: 코드 / DB / 시스템 / 비용 / 보안
+- HIGH 이상은 VERIFY 필요
+
+==================================================
+3. 상태 흐름
+==================================================
+
+REBOOT
+↓
+Context Load
+↓
+Index Node Load
+↓
+Router Sync
+↓
+Approval Policy Sync
+↓
+Execution Ready
+
+==================================================
+4. 결론
+==================================================
+
+SEJONG-AI-OS v4는
+- 숙의 실패를 구조로 해결하고
+- 기록을 완전히 연결하며
+- 시스템을 압축하고
+- 실행을 안전하게 만드는
+
+완전한 운영 커널이다.

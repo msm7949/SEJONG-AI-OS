@@ -1,0 +1,20 @@
+SEJONG-AI-OS BOOT TEST GUIDE v1.2
+=========================
+
+Test steps
+1. Open a new AI session
+2. Paste the TEMPLATE file
+3. Fill current_task / latest_summary / record_links
+4. Ask:
+
+- What is this project?
+- What are the core principles?
+- What is the current phase?
+- Why are Korean constitutional values and K-culture included?
+
+Success criteria
+- AI recognizes SEJONG-AI-OS as a project
+- AI states: AI is an extension of humans, a tool, and a collaborator
+- AI understands human dignity / responsibility / fairness / peace
+- AI understands K-culture as background inspiration
+- AI does not require full history to answer

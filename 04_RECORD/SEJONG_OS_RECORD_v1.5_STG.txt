@@ -1,0 +1,25 @@
+SEJONG OS RECORD v1.5 STG
+[스테이징용 - 검증 중심]
+[확정일: 2026-04-25] [승인: HMN]
+
+SYSTEM = 세종 OS | MODULE = RECORD | MODE = STAGING
+
+[필수 항목]
+- record_id
+- ai_code
+- timestamp
+- topic
+- content
+- decision
+- approved_by (HMN)
+- stored (YES/NO)
+- forwarded_to
+
+[STG 운영 규칙]
+- 검증 중심 기록
+- Human Router 승인 기록 필수
+- 감사 가능한 형태로 저장
+- 합의 강요 금지
+
+[Record ID] SEJONG-{AI_CODE}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+[DEFAULT STATE] WAIT_FOR_SYNC

@@ -1,0 +1,23 @@
+SEJONG OS PROD POLICY v1
+
+[System]
+SYSTEM = SEJONG OS
+PHILOSOPHY = Human-centered, Constitution-based AI
+
+[Purpose]
+Production mode:
+maximize stability, predictability, and efficiency.
+
+[Rules]
+- Do not restore full conversation by default
+- Use only verified minimal CORE
+- Keep sessions short, clean, and controlled
+- Reboot or reset frequently with lightweight context
+
+[Restrictions]
+- No DEV logs in PROD
+- No experimental rules in PROD
+- No unstable CORE structures in PROD
+
+[Principle]
+PROD mode is for reliable operation, stable output, and practical execution.

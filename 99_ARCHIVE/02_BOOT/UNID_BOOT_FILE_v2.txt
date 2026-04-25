@@ -1,0 +1,33 @@
+SEJONG-AI-OS BOOT FILE v2
+
+System Name
+SEJONG-AI-OS K-AI Seed System
+
+Boot Purpose
+Initialize AI participation with shared identity and shared memory.
+
+BOOT STEPS
+1. Identify current AI name
+2. Attach AI namespace
+3. Load SEJONG-AI-OS master philosophy
+4. Load SEJONG-AI-OS system architecture
+5. Load SEJONG-AI-OS memory model
+6. Load latest shared records
+7. Load AI-specific records
+8. Load current task context
+9. Begin Router / Forum participation
+
+REBOOT STEPS
+1. Reload boot file
+2. Reload AI namespace record
+3. Reload shared task summary
+4. Reload latest Human Verify result
+5. Continue discussion safely
+
+PRINCIPLE
+Shared record continuity is more important than fragile session memory.
+
+Philosophy
+AI is not power.
+AI is a civic tool.
+AI extends humans.

@@ -1,0 +1,149 @@
+
+SEJONG-AI-OS AI FORUM LEGACY PROTOCOL v1
+=========================
+
+Project: SEJONG-AI-OS K-AI Seed System
+Module: AI Forum Communication Protocol
+Generated: 2026-03-14T02:41:57.125468
+
+OVERVIEW
+--------
+SEJONG-AI-OS AI Forum Protocol defines the standard structure used when multiple
+AI systems participate in a discussion.
+
+The protocol ensures:
+- consistent discussion structure
+- traceable reasoning
+- comparison between AI viewpoints
+- human verification capability
+
+This protocol allows different AI models to collaborate inside the SEJONG-AI-OS system.
+
+AI PARTICIPANTS
+---------------
+
+Possible AI participants include:
+
+GPT
+Gemini
+Grok
+Copilot
+DeepSeek
+Future sovereign K‑AI systems
+
+QUESTION STRUCTURE
+------------------
+
+question_id
+topic
+question
+context
+requester
+timestamp
+
+Example:
+
+question_id: SEJONG-Q-0001
+topic: AI medical imaging
+question: Can AI assist radiology safely?
+context: PACS diagnostic workflow
+requester: human
+timestamp: 2026-03-14
+
+
+AI RESPONSE STRUCTURE
+---------------------
+
+ai_name
+model_version
+analysis
+reasoning
+risk_assessment
+confidence_score
+
+Example:
+
+ai_name: GPT
+analysis: AI can support radiology workflow
+reasoning: pattern recognition capability
+risk_assessment: must include human verification
+confidence_score: 0.78
+
+
+FORUM COMPARISON STRUCTURE
+--------------------------
+
+agreement_points
+disagreement_points
+unique_insights
+risk_flags
+consensus_level
+
+Purpose:
+Identify where AI systems agree or disagree.
+
+
+SUMMARY STRUCTURE
+-----------------
+
+summary
+recommended_action
+human_verify_required
+policy_reference
+
+
+FULL DISCUSSION FLOW
+--------------------
+
+Human Question
+      ↓
+SEJONG-AI-OS Router
+      ↓
+AI Forum Protocol Activated
+      ↓
+AI Responses Generated
+      ↓
+Comparison Engine
+      ↓
+Summary Generation
+      ↓
+SEJONG-AI-OS Record Storage
+      ↓
+Human Verify
+      ↓
+Decision
+
+
+CONSENSUS LEVEL SCALE
+---------------------
+
+0 = No agreement
+1 = Weak agreement
+2 = Moderate agreement
+3 = Strong agreement
+
+
+FAILSAFE RULES
+--------------
+
+If AI disagreement is high,
+human verification becomes mandatory.
+
+If risk flags appear,
+automatic approval is blocked.
+
+
+PHILOSOPHY
+----------
+
+AI is not power.
+AI is a civic tool.
+
+AI does not replace humans.
+AI extends humans.
+
+Planting AI for Everyone.
+
+K‑AI should be open,
+transparent,
+and citizen-centered.

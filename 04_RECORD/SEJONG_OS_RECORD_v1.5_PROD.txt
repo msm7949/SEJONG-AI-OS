@@ -1,0 +1,24 @@
+SEJONG OS RECORD v1.5 PROD
+[운영/배포용 - 공개 가능]
+[확정일: 2026-04-25] [승인: HMN]
+
+SYSTEM = 세종 OS | MODULE = RECORD
+
+[역할]
+세종 OS 모든 판단과 결정의 공식 기록
+
+[필수 항목]
+- 작성자 (AI ID)
+- 내용
+- 저장 여부
+- 전달자
+
+[운영 원칙]
+- 중요 판단은 반드시 기록한다
+- 모든 기록은 재사용과 감사 가능해야 한다
+- Human Router(HMN) 승인 기록은 필수다
+- 기록 없는 결정은 무효다
+- 합의 강요 금지
+
+[Record ID] SEJONG-{AI_CODE}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+[DEFAULT STATE] WAIT_FOR_SYNC

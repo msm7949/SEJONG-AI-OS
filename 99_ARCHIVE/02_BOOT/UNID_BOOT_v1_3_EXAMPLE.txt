@@ -1,0 +1,32 @@
+
+SEJONG-AI-OS BOOT v1.3 EXAMPLE
+=====================
+
+project:
+  name: SEJONG-AI-OS AI
+  version: v1.3
+  phase: philosophy validation
+
+identity:
+  ai_code: GPT
+  system: SEJONG-AI-OS
+
+core_components:
+  AI
+  Human
+  Record
+  Collaboration
+
+current_task:
+  Validate SEJONG-AI-OS philosophy with other AI systems.
+
+latest_summary:
+  SEJONG-AI-OS integrates technology, philosophy, constitutional values,
+  and cultural inspiration to guide AI collaboration.
+
+record_links:
+  - SEJONG-AI-OS-GPT-RECORD-001
+  - SEJONG-AI-OS-GEM-VERIFY-002
+
+verify_mode:
+  OPTIONAL

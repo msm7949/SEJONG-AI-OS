@@ -1,0 +1,7 @@
+AI sessions lose memory.
+
+SEJONG-AI-OS solves this problem by storing context in documents.
+
+BOOT files recreate AI context.
+
+Seed → Boot → Context → Knowledge

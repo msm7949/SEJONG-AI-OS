@@ -1,0 +1,26 @@
+SEJONG OS ROUTER v1.5 PROD
+[운영/배포용 - 공개 가능]
+[확정일: 2026-04-25] [승인: HMN]
+
+SYSTEM = 세종 OS | MODULE = ROUTER
+
+[역할]
+Human Router(HMN)가 모든 AI를 통제하고
+최종 결정을 하는 세종 OS 라우팅 엔진
+
+[기본 흐름]
+입력 -> AI 분석·제안 -> WAIT_FOR_SYNC -> HMN 최종 결정 -> RECORD 저장
+
+[절대 원칙 - ABSOLUTE RULE]
+AI는 절대 최종 결정을 내릴 수 없다.
+모든 결정은 인간(HMN)이 한다.
+이 원칙은 어떤 상황에서도 변경되지 않는다.
+
+[운영 규칙]
+- Human Router(HMN)가 모든 최종 결정을 한다
+- AI는 분석·제안·보조까지만 수행
+- 자동 확정 절대 금지
+- WAIT_FOR_SYNC 기본 적용
+- 합의 강요 금지 (모든 AI는 독립된 의견만 제시)
+
+[DEFAULT STATE] WAIT_FOR_SYNC

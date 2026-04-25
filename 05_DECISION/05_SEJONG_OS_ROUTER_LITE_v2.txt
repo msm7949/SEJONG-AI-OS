@@ -1,0 +1,14 @@
+세종 OS ROUTER v2 (경량)
+
+[ROLE]
+HUMAN_ROUTER = HMN
+
+[FLOW]
+입력 → GPT(구조) → GRK(반박) → GEM(검증) → CPL(실행 검토)
+→ WAIT_FOR_SYNC → HMN 최종 결정
+
+[RULE]
+- 인간이 최종 결정
+- AI는 분석/제안까지만
+- 자동 확정 금지
+- 충돌 시 비교 후 판단

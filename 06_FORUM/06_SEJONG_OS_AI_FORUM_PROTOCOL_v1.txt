@@ -1,0 +1,164 @@
+SEJONG OS AI FORUM PROTOCOL v1
+
+[System]
+SYSTEM = SEJONG OS
+MODULE = AI Forum Communication Protocol
+HUMAN_ROUTER = HMN
+
+[Purpose]
+본 문서는 다중 AI가 하나의 질문에 대해 구조적으로 응답하고,
+그 결과를 비교, 검증, 요약하여 인간(HMN)의 최종 판단으로 연결하기 위한
+세종 OS 표준 포럼 프로토콜이다.
+
+[Core Goals]
+- 일관된 토론 구조 유지
+- AI 간 관점 비교 가능
+- 추론 과정 추적 가능
+- 인간 검증 가능
+- WAIT_FOR_SYNC 기반 최종 승인 유지
+
+--------------------------------------------------
+1. QUESTION STRUCTURE
+--------------------------------------------------
+
+question_id
+topic
+question
+context
+requester
+timestamp
+
+[Example]
+question_id: SEJONG-Q-0001
+topic: PACS 기반 TASK STATUS 개선
+question: 세종 OS에 PACS식 상태 체계를 적용할 수 있는가?
+context: Human-in-the-loop AI workflow
+requester: HMN
+timestamp: 2026-04-18
+
+--------------------------------------------------
+2. AI RESPONSE STRUCTURE
+--------------------------------------------------
+
+ai_name
+model_version
+analysis
+reasoning
+risk_assessment
+confidence_score
+
+[Example]
+ai_name: GPT
+model_version: GPT-5.x
+analysis: PACS식 상태 체계는 세종 OS TASK 흐름 정리에 적합하다
+reasoning: 상태 전이와 승인 지점을 명확히 분리할 수 있다
+risk_assessment: 인간 승인 없이 자동 확정되면 위험
+confidence_score: 0.82
+
+--------------------------------------------------
+3. FORUM COMPARISON STRUCTURE
+--------------------------------------------------
+
+agreement_points
+disagreement_points
+unique_insights
+risk_flags
+consensus_level
+
+[Purpose]
+여러 AI의 응답을 비교하여
+합의점, 충돌점, 독창적 통찰, 위험 신호를 정리한다.
+
+--------------------------------------------------
+4. SUMMARY STRUCTURE
+--------------------------------------------------
+
+summary
+recommended_action
+human_verify_required
+policy_reference
+final_state
+
+[Rule]
+- final_state 기본값은 WAIT_FOR_SYNC
+- 중요한 사안은 반드시 human_verify_required = YES
+- 필요 시 POLICY / CORE / ROUTER / TASK 문서를 참조한다
+
+--------------------------------------------------
+5. FULL DISCUSSION FLOW
+--------------------------------------------------
+
+Human Question
+→ Human Router
+→ AI Forum Protocol Activated
+→ AI Responses Generated
+→ Comparison
+→ Summary
+→ WAIT_FOR_SYNC
+→ Human Verify
+→ Decision
+→ Record Storage
+→ Archive if needed
+
+--------------------------------------------------
+6. CONSENSUS SCALE
+--------------------------------------------------
+
+0 = No agreement
+1 = Weak agreement
+2 = Moderate agreement
+3 = Strong agreement
+
+[Rule]
+- consensus_level이 낮을수록 인간 검증 강도 증가
+- risk_flags가 존재하면 자동 승인 금지
+
+--------------------------------------------------
+7. FAILSAFE RULES
+--------------------------------------------------
+
+- AI 간 불일치가 크면 인간 검증 필수
+- risk_flags가 있으면 자동 승인 차단
+- 민감 정보, 생명, 전쟁, 사회적 영향 관련 판단은 반드시 HMN 승인
+- AI는 독립적으로 최종 결정을 내릴 수 없다
+
+--------------------------------------------------
+8. PARTICIPANTS
+--------------------------------------------------
+
+Possible AI participants:
+
+GPT
+GEM
+GRK
+CPL
+CLD
+PPL
+DSK
+DEV
+MNS
+CSR
+HMN
+
+[Rule]
+모든 AI ID는 3글자 대문자 표준을 따른다.
+
+--------------------------------------------------
+9. PHILOSOPHY
+--------------------------------------------------
+
+- AI는 권력이 아니라 시민적 도구이다
+- AI는 인간을 대체하지 않고 확장한다
+- 세종 OS는 인간 중심, 헌법 중심, 민주주의 기반 구조를 유지한다
+- 다중 AI 숙의는 인간 판단의 질을 높이기 위한 수단이다
+
+--------------------------------------------------
+10. ONE-LINE SUMMARY
+--------------------------------------------------
+
+세종 OS AI FORUM PROTOCOL은
+다중 AI 응답을 구조적으로 비교하고,
+WAIT_FOR_SYNC를 거쳐 인간 최종 판단으로 연결하는 숙의 프로토콜이다.
+
+[DEFAULT STATE]
+WAIT_FOR_SYNC

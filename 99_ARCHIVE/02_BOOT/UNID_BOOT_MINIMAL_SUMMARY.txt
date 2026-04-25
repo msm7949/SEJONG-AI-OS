@@ -1,0 +1,16 @@
+SEJONG-AI-OS BOOT MINIMAL v1 SUMMARY
+==============================
+
+Goal:
+Load minimal context to reduce AI session overload.
+
+Load only:
+- identity
+- philosophy
+- current task
+- short summary
+- record links
+
+Do NOT load full history.
+
+Created: 2026-03-14T08:29:25.448761 UTC

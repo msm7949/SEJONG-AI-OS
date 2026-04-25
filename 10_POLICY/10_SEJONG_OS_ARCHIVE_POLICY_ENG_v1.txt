@@ -1,0 +1,18 @@
+SEJONG OS ARCHIVE POLICY v1
+
+[System]
+SYSTEM = SEJONG OS
+PHILOSOPHY = Human-centered, Constitution-based AI
+
+[Purpose]
+Preserve system history and evolution.
+
+[Rules]
+- No deletion (DROP forbidden)
+- Move old files from ACTIVE to ARCHIVE
+- Maintain original file names and version names
+- Clearly separate ACTIVE and ARCHIVE folders
+
+[Principle]
+Archive is not trash.
+Archive is preserved history for future recovery, audit, and reuse.

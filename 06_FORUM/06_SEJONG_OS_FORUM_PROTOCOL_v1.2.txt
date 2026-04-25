@@ -1,0 +1,44 @@
+[세종 OS FORUM PROTOCOL v1.2 Final]
+
+[절대 원칙 - ABSOLUTE RULE]
+AI는 절대 최종 결정을 내릴 수 없다.
+모든 결정은 인간(HMN)이 한다.
+이 원칙은 어떤 상황에서도 변경되지 않는다.
+
+[목적]
+세종 OS에서 여러 AI가 구조적으로 토론하되,
+최종 결정권은 항상 인간에게 있는 민주적 숙의 프로토콜이다.
+
+[기본 흐름]
+Human 질문 
+→ Router 판단 
+→ Forum 활성화 (필요 시) 
+→ AI 응답 (분석·제안)
+→ 비교·숙의 
+→ WAIT_FOR_SYNC 
+→ Human Router 최종 결정 
+→ RECORD 저장
+
+[참여 AI]
+GPT GEM GRK CLD CPL PPL DSK DEV MNS CSR HMN
+
+[토론 규칙]
+- 모든 AI는 독립된 의견만 제시한다 (합의 강요 금지)
+- 중요한 토론은 WAIT_FOR_SYNC 상태로 전환한다
+- 기록은 SEJONG Record 형식으로 저장한다
+
+[기록 형식]
+중요 Forum 기록은 반드시 포함:
+1. 작성자
+2. 내용 상세
+3. 저장 여부
+4. 전달자
+
+Record ID: SEJONG-{AI_CODE}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+
+[한 줄 정의]
+세종 OS Forum은 여러 AI의 지혜를 모으되, 
+최종 결정권은 항상 인간에게 있는 민주적 숙의 구조이다.
+
+[기본 상태]
+WAIT_FOR_SYNC

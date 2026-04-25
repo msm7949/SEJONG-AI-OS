@@ -1,0 +1,6 @@
+SEJONG-AI-OS_ARCHIVE_POLICY_v1
+
+[Purpose] Preserve system evolution and history.
+
+[Rules] - No deletion (DROP forbidden) - Move old files to ARCHIVE -
+Maintain file names and versions - Separate ACTIVE and ARCHIVE clearly

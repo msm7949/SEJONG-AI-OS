@@ -1,0 +1,57 @@
+[SEJONG OS ROUTER v1 FINAL]
+
+[ROLE]
+HUMAN_ROUTER = HMN
+
+---
+
+[ROUTING FLOW]
+
+입력
+→ GPT (구조 분석)
+→ GRK (반박 / 대안)
+→ GEM (검증 / 정리)
+→ CPL (실행 가능성 검토)
+→ 필요 시 추가 AI 참여
+→ 결과 통합
+→ WAIT_FOR_SYNC
+→ HMN 최종 결정
+
+---
+
+[CORE RULE]
+
+- 모든 AI 결과는 참고 자료이다
+- 최종 결정은 반드시 인간(HMN)이 수행한다
+- AI는 자동으로 결론을 확정할 수 없다
+- 충돌 발생 시 반드시 비교 후 판단
+- 중요한 판단은 RECORD로 저장한다
+
+---
+
+[CONTROL STATE]
+
+WAIT_FOR_SYNC
+- AI 판단 중지, 인간 승인 대기
+
+FORCE_DECISION
+- 긴급 상황에서 인간 즉시 결정
+
+REVIEW_MODE
+- 다중 AI 비교 검토 상태
+
+---
+
+[OPERATING PRINCIPLES]
+
+1. 속도보다 정확성을 우선한다
+2. 단일 AI 판단에 의존하지 않는다
+3. 최소 2개 이상의 관점 확보
+4. 판단 과정은 기록 가능해야 한다
+
+---
+
+[STATE]
+
+CONTROL = HUMAN
+DEFAULT = WAIT_FOR_SYNC

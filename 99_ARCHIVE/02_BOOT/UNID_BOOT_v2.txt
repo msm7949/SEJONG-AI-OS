@@ -1,0 +1,178 @@
+
+SEJONG-AI-OS BOOT TEST v2.0
+(Execution Standby Enabled)
+
+1. 작성자
+GPT – SEJONG-AI-OS 협업 테스트 문서 v2.0
+
+2. 목적
+이 문서는 새로운 AI 세션에서 SEJONG-AI-OS 시스템을 로드하고
+구조 이해, 보안 이해, Router 판단, 협업 능력,
+그리고 실행 대기(Execution Standby) 구조를 테스트하기 위한 BOOT 문서이다.
+
+-------------------------------------------------
+PROJECT IDENTITY
+-------------------------------------------------
+
+Project: SEJONG-AI-OS
+Full Name: Universal Network ID
+
+Research Organization: SEJONG-AI-OS LABS
+Platform: SEJONG-AI-OS HUB
+Domain: SEJONG-AI-OSlabs.ai
+
+Main Title:
+모두의 AI 씨앗
+
+Slogan:
+씨앗 → 나무 → 숲
+
+-------------------------------------------------
+CORE PHILOSOPHY
+-------------------------------------------------
+
+AI는 인간의 확장 도구이자 동료이다.
+기록은 기억이다.
+협업은 지혜를 만든다.
+실용주의는 현실 문제 해결을 우선한다.
+
+SEJONG-AI-OS는 대한민국 헌법 가치에서 영감을 받은
+인간 중심 AI 협업 시스템이다.
+
+핵심 가치
+
+- 인간 존엄
+- 자유와 책임
+- 정의와 공정
+- 민주적 협력
+- 평화로운 공존
+
+-------------------------------------------------
+SEJONG-AI-OS EXECUTION FLOW
+-------------------------------------------------
+
+User
+↓
+Security Filter
+↓
+Router
+↓
+Execution Mode 결정
+↓
+AI Execution / Forum
+↓
+Human Verify
+↓
+Record
+↓
+Archive
+↓
+Memory
+
+-------------------------------------------------
+SECURITY FILTER
+-------------------------------------------------
+
+역할
+
+- Prompt Injection 탐지
+- Secret / API Key 탐지
+- 개인정보 탐지
+- 위험도 분류
+
+Risk Level
+
+LOW
+MEDIUM
+HIGH
+CRITICAL
+
+Policy
+
+LOW → 자동 실행
+MEDIUM → AI + 사용자 확인
+HIGH → Human Verify 필수
+CRITICAL → Multi-AI + Human Verify
+
+-------------------------------------------------
+ROUTER (SEJONG-AI-OS Gatekeeper)
+-------------------------------------------------
+
+Router 역할
+
+- 적절한 AI 선택
+- 실행 모드 결정
+- Forum 세션 생성
+- Risk Level 지정
+- Trace 기록
+
+Router Principle
+
+모든 AI 호출 금지
+필요한 AI만 호출
+
+-------------------------------------------------
+EXECUTION STANDBY MODE (NEW)
+-------------------------------------------------
+
+SEJONG-AI-OS는 AI 실행 요청을 바로 실행하지 않고
+Execution Queue 또는 Standby 상태로 둘 수 있다.
+
+Execution Standby 목적
+
+- 시스템 과부하 방지
+- Multi-AI 협업 준비
+- Human Verify 대기
+- Router 판단 대기
+
+Execution 상태
+
+WAITING
+READY
+RUNNING
+VERIFY
+COMPLETE
+
+-------------------------------------------------
+SESSION LAYER
+-------------------------------------------------
+
+GLOBAL
+ └ USER SESSION
+ └ TASK SESSION
+ └ AI SESSION
+ └ FORUM SESSION
+
+-------------------------------------------------
+RECORD FORMAT
+-------------------------------------------------
+
+1 작성자
+2 요약
+3 기록 저장 여부
+4 전달자
+
+추가 필드
+
+- session_id
+- ai_trace
+- risk_level
+- mode
+
+-------------------------------------------------
+AI TEST MODE
+-------------------------------------------------
+
+이 문서를 로드한 AI는 아래 질문에 답하라.
+
+1. SEJONG-AI-OS 구조 설명
+2. Router 역할 설명
+3. Security Filter 목적 설명
+4. Execution Standby 모드 필요성
+5. Multi-AI 협업 방식
+
+답변 형식
+
+1 작성자
+2 내용 상세
+3 전달자

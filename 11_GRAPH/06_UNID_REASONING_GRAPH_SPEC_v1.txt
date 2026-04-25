@@ -1,0 +1,79 @@
+SEJONG-AI-OS REASONING GRAPH SPEC v1
+
+1 작성자 GPT (Architecture Support)
+
+2 내용 상세
+
+목적 SEJONG-AI-OS Reasoning Graph는 여러 AI와 인간이 협력하여 만든 판단 과정을
+구조적으로 저장하기 위한 데이터 구조 정의이다.
+
+이 구조는 단순한 로그가 아니라 추론 흐름을 재사용할 수 있는 그래프
+형태의 지식 자산을 목표로 한다.
+
+핵심 개념
+
+Record 하나의 판단, 의견, 분석, 또는 결론을 나타내는 최소 단위.
+
+Record Tree 각 Record는 parent_record_id를 통해 연결되어 트리 구조를
+형성한다.
+
+Reasoning Graph 여러 Record Tree와 교차 참조가 가능해지면 전체 시스템은
+DAG 형태의 추론 그래프가 된다.
+
+DAG (Directed Acyclic Graph)
+
+특징
+
+방향성 존재 (parent → child) 순환 없음 (cycle 금지) 여러 부모 연결 가능
+
+SEJONG-AI-OS에서는 Record Tree를 기본 구조로 사용하지만 확장 시 DAG 형태의
+Reasoning Graph를 허용할 수 있다.
+
+구조 단계
+
+Level 1 — Record 단일 판단 또는 메시지
+
+Level 2 — Record Tree 하나의 세션 내 추론 흐름
+
+Level 3 — Reasoning Graph 여러 세션 / 포럼 / 작업 간 연결된 지식 그래프
+
+Record 기본 필드
+
+record_id parent_record_id session_id task_id forum_id user_id ai_id
+timestamp mode risk_level status
+
+선택 확장 필드
+
+reference_record_id topic_tag confidence_score source_ai
+
+그래프 규칙
+
+1.  Record는 반드시 record_id를 가진다.
+2.  parent_record_id는 하나 또는 여러 개 가능하다.
+3.  순환 구조(cycle)는 허용하지 않는다.
+4.  Forum 기록은 동일 forum_id로 연결된다.
+5.  Human 최종 결정은 leaf node가 될 수 있다.
+
+그래프 활용
+
+과거 추론 경로 검색 유사 문제 해결 방식 탐색 AI 판단 비교 분석 의사결정
+감사 기록
+
+SEJONG-AI-OS 정의와의 관계
+
+Human Governance → 그래프의 최종 결정 노드 생성
+
+Router → 어떤 AI 노드가 추가될지 결정
+
+Forum → 병렬 추론 브랜치 생성
+
+Record Tree → Reasoning Graph의 기본 구조
+
+한 줄 정의
+
+SEJONG-AI-OS Reasoning Graph는 인간과 AI가 함께 만든 판단 과정을 DAG 구조로
+축적하는 협업 추론 그래프이다.
+
+3 전달자
+
+상훈 → GPT / Gemini / Claude / Grok / DeepSeek / Devin / Copilot

@@ -1,0 +1,30 @@
+SEJONG OS RECORD v1.5 DEV
+[개발용 - 전문 포함 / 비공개]
+[확정일: 2026-04-25] [승인: HMN]
+
+SYSTEM = 세종 OS | MODULE = RECORD | MODE = DEVELOPMENT
+
+[역할]
+세종 OS 모든 판단·토론·결정의 완전 기록
+
+[필수 항목]
+- record_id
+- ai_code (작성 AI)
+- timestamp
+- topic
+- content (내용 상세)
+- decision
+- approved_by (HMN)
+- stored (YES/NO)
+- forwarded_to (전달자)
+- forum_link (있을 경우)
+- version
+
+[DEV 운영 규칙]
+- 상세 메타데이터 모두 기록
+- 실험·실패 케이스도 기록
+- 합의 강요 금지
+- 이 문서는 외부 배포 금지
+
+[Record ID] SEJONG-{AI_CODE}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+[DEFAULT STATE] WAIT_FOR_SYNC

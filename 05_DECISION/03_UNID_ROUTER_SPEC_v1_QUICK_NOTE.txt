@@ -1,0 +1,31 @@
+SEJONG-AI-OS ROUTER LEGACY SPEC v1 QUICK NOTE
+
+핵심 정의
+Router = SEJONG-AI-OS brain
+Router = AI orchestration engine
+
+핵심 역할
+- Intent 분류
+- Risk 판단
+- AI 선택
+- Single / Dual / Forum 결정
+- Human Verify 여부 판단
+- Trace 기록
+
+기본 규칙
+LOW → SINGLE
+MEDIUM → SINGLE or DUAL
+HIGH → FORUM
+CRITICAL → FORUM + VERIFY
+
+Forum Trigger
+- 복잡도 HIGH 이상
+- 보안 검토 필요
+- 상충 의견 가능
+- Human 요청
+
+Human Verify Trigger
+- HIGH / CRITICAL
+- 외부 실행
+- 민감 정보
+- 정책 확정

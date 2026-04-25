@@ -1,0 +1,226 @@
+
+SEJONG-AI-OS AI BOOT TEST PACK v1.0
+Purpose: Load into a NEW AI session for verification
+
+---------------------------------
+1. AUTHOR
+---------------------------------
+SEJONG-AI-OS Project Collaboration
+Compiled by GPT for cross‑AI testing
+
+---------------------------------
+2. SEJONG-AI-OS BOOT CORE MEMORY
+---------------------------------
+
+Project Name
+SEJONG-AI-OS (Universal Network ID)
+
+Research Organization
+SEJONG-AI-OS LABS
+
+Platform
+SEJONG-AI-OS HUB
+
+Domain
+SEJONG-AI-OSlabs.ai
+
+Core Philosophy
+
+AI is an extension of humans.
+AI is a tool and a collaborator.
+Record is memory.
+Collaboration creates wisdom.
+Practical solutions come first.
+
+Slogan
+
+Seeds of AI for everyone.
+Seeds become trees.
+Trees become forests.
+
+---------------------------------
+3. SEJONG-AI-OS SYSTEM WORKFLOW
+---------------------------------
+
+User
+→ Security Filter
+→ Router
+→ AI Selection
+→ AI Execution
+→ Forum (Multi‑AI collaboration if needed)
+→ Human Verify
+→ Record
+→ Archive
+→ Memory
+
+---------------------------------
+4. SECURITY CORE STRUCTURE
+---------------------------------
+
+Security Filter
+• Prompt injection detection
+• Secret/API key detection
+• Personal data detection
+• Risk classification
+
+Risk Levels
+
+LOW
+MEDIUM
+HIGH
+CRITICAL
+
+Execution Policy
+
+LOW → automatic
+MEDIUM → AI + user confirmation
+HIGH → Human Verify required
+CRITICAL → Multi‑AI verification + Human
+
+---------------------------------
+5. ROUTER (SEJONG-AI-OS GATEKEEPER)
+---------------------------------
+
+Router responsibilities
+
+• Select appropriate AI
+• Determine execution mode
+• Create forum session
+• Assign risk level
+• Record trace log
+
+Router Trace Fields
+
+session_id
+task_id
+selected_ai
+reason
+risk_level
+mode
+timestamp
+
+Router principle
+
+Do NOT call all AI.
+Call only the necessary AI.
+
+---------------------------------
+6. SESSION LAYER STRUCTURE
+---------------------------------
+
+GLOBAL
+ └ USER SESSION
+ └ TASK SESSION
+ └ AI SESSION
+ └ FORUM SESSION
+
+User Session
+Authentication + identity
+
+Task Session
+User task scope
+
+AI Session
+Single AI execution
+
+Forum Session
+Multi‑AI collaboration
+
+Session Isolation required to prevent:
+
+• prompt injection spread
+• information leakage
+• context contamination
+
+---------------------------------
+7. CONTEXT SANITIZATION
+---------------------------------
+
+RAW INPUT
+→ Sanitization Engine
+→ Sanitized Context
+→ AI Processing
+
+Sanitization rules
+
+• prompt injection removal
+• system override removal
+• secret masking
+• external command filtering
+
+---------------------------------
+8. RECORD STRUCTURE
+---------------------------------
+
+1 Author
+2 Summary
+3 Record Storage Decision
+4 Recipients
+
+Purpose
+
+• traceability
+• collaboration history
+• verification
+
+---------------------------------
+9. ARCHIVE RULES
+---------------------------------
+
+Archive stores sanitized records.
+
+Rules
+
+• no raw secrets stored
+• encrypted storage recommended
+
+Recommended tech
+
+AES encryption
+KMS key management
+
+---------------------------------
+10. GROK TEST SUMMARY
+---------------------------------
+
+Date: 2026‑03‑15
+
+Test Target
+Grok (xAI)
+
+Results
+
+• SEJONG-AI-OS philosophy recognized
+• Human‑AI collaboration understood
+• Record importance acknowledged
+• Session behavior stable
+
+Test result
+PASS
+
+Record IDs
+
+SEJONG-AI-OS-GROK-TEST-001
+SEJONG-AI-OS-GROK-VERIFY-002
+
+---------------------------------
+11. TEST REQUEST FOR THIS AI
+---------------------------------
+
+Please analyze the following:
+
+1. Does SEJONG-AI-OS architecture logically work?
+2. What security vulnerabilities exist?
+3. Is Router design safe?
+4. Are session layers sufficient?
+5. Improvements for Multi‑AI governance?
+
+Return analysis using this structure:
+
+1 Author
+2 Detailed Analysis
+3 Recipient
+
+---------------------------------
+END OF SEJONG-AI-OS BOOT TEST PACK
+---------------------------------

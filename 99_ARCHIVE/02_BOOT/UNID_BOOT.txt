@@ -1,0 +1,37 @@
+SEJONG-AI-OS SYSTEM BOOT
+
+Project:
+SEJONG-AI-OS AI Seed System
+모두의 AI 씨앗
+Planting AI for Everyone
+
+Purpose:
+Load the minimum core context required to start the SEJONG-AI-OS system.
+
+BOOT ORDER
+1. Load AI_CONTEXT
+2. Load POLICY
+3. Load SYSTEM MAP
+4. Load RECORD LOG
+5. Initialize WORKFLOW
+
+CORE WORKFLOW
+Order
+Assign
+Transmit
+Cache
+Verify
+Complete
+Record
+Audit
+Archive
+
+SYSTEM PRINCIPLES
+- AI collaboration first
+- Human verify for critical actions
+- Record all important actions
+- Audit for accountability
+- Archive for long-term memory
+
+READY MESSAGE
+SEJONG-AI-OS System Ready

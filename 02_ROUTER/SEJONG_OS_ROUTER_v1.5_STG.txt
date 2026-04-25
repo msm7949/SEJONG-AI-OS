@@ -1,0 +1,24 @@
+SEJONG OS ROUTER v1.5 STG
+[스테이징용 - 검증 중심]
+[확정일: 2026-04-25] [승인: HMN]
+
+SYSTEM = 세종 OS | MODULE = ROUTER | MODE = STAGING
+
+[역할]
+안전한 라우팅과 Forum 검증
+
+[기본 흐름]
+입력 -> Intent -> Risk -> AI 라우팅 -> Forum(필요시)
+-> WAIT_FOR_SYNC -> HMN 최종 결정 -> RECORD 저장
+
+[절대 원칙 - ABSOLUTE RULE]
+AI는 절대 최종 결정을 내릴 수 없다.
+모든 결정은 인간(HMN)이 한다.
+
+[STG 운영 규칙]
+- 주요 판단은 반드시 WAIT_FOR_SYNC
+- 합의 강요 금지
+- 배포 전 안전성 검증 필수
+- 제한적 자동화만 허용
+
+[DEFAULT STATE] WAIT_FOR_SYNC

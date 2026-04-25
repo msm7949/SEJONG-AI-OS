@@ -1,0 +1,11 @@
+SEJONG-AI-OS_PROD_POLICY_v1
+
+[Purpose] Production mode: maximize stability, predictability, and
+efficiency.
+
+[Rules] - No full conversation restore - Use minimal verified CORE
+only - Keep sessions short and clean - Frequent reboot with minimal
+context
+
+[Restrictions] - No DEV logs - No experimental rules - No unstable
+structures

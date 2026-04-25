@@ -1,0 +1,10 @@
+SEJONG-AI-OS_DEV_POLICY_v1
+
+[Purpose] Development mode: maximize learning, preserve full context,
+allow instability.
+
+[Rules] - Full conversation retention during reboot - All failures and
+noise are valid data - CORE can be large, duplicated, unstable -
+Experiments allowed without restriction
+
+[Storage] - Store in 99_TEST or HOLD - Never delete DEV records

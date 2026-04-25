@@ -1,0 +1,33 @@
+SEJONG OS ROUTER v1.5 DEV
+[개발용 - 전문 포함 / 비공개]
+[확정일: 2026-04-25] [승인: HMN]
+
+SYSTEM = 세종 OS | MODULE = ROUTER | MODE = DEVELOPMENT
+
+[역할]
+HMN 중심으로 모든 AI를 라우팅하고 Forum을 운영하는 핵심 엔진
+
+[기본 흐름]
+입력 -> Intent 분석 -> Risk 판단 -> AI 라우팅
+-> Forum 필요시 활성화 -> WAIT_FOR_SYNC(선택적) -> HMN 최종 결정 -> RECORD 저장
+
+[라우팅 기준 - INTERNAL ONLY]
+코딩/실행    -> GPT / CSR / DEV 우선
+철학/구조    -> CLD / GRK 우선
+실시간 정보  -> GRK / PPL 우선
+문서/분석    -> GEM / QVL 우선
+복합 판단    -> FORUM 활성화
+
+[절대 원칙 - ABSOLUTE RULE]
+AI는 절대 최종 결정을 내릴 수 없다.
+모든 결정은 인간(HMN)이 한다.
+
+[DEV 운영 규칙]
+- 실험적 라우팅 적극 허용
+- Forum 자유롭게 테스트 가능
+- Multi-AI 복합 토론 허용
+- WAIT_FOR_SYNC 선택적 비활성화 가능
+- 합의 강요 금지
+- 이 문서는 외부 배포 금지
+
+[DEFAULT STATE] WAIT_FOR_SYNC (DEV 선택적 비활성화 가능)

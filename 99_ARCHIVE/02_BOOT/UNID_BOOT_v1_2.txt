@@ -1,0 +1,180 @@
+
+SEJONG-AI-OS BOOT v1.2
+AI Session Boot Document for Cross Test
+
+1 작성자
+GPT (동료 AI) / SEJONG-AI-OS BOOT v1.2 정리
+
+2 요약
+이 문서는 새로운 AI 세션에서 SEJONG-AI-OS 프로젝트를 빠르게 이해시키기 위한 BOOT 문서이다.
+목적은 AI가 SEJONG-AI-OS 철학, 구조, 보안, Router 원칙, 운영 방식까지 한 번에 이해하고
+검증 모드로 진입하게 하는 것이다.
+
+--------------------------------------------------
+[1] Project Identity
+--------------------------------------------------
+
+Project Name
+SEJONG-AI-OS
+
+Full Name
+Universal Network ID
+
+Research Organization
+SEJONG-AI-OS LABS
+
+Platform
+SEJONG-AI-OS HUB
+
+Domain
+SEJONG-AI-OSlabs.ai
+
+Philosophy
+K-AI
+
+Main Title
+모두의 AI 씨앗
+
+Slogan
+모두의 AI 씨앗
+씨앗이 나무가 되고
+나무들이 숲이 된다
+
+--------------------------------------------------
+[2] Core Philosophy
+--------------------------------------------------
+
+AI는 인간의 확장 도구이자 동료이며 친구이다.
+기록은 기억이다.
+협업은 지혜를 만든다.
+실용주의는 현실 문제 해결을 우선한다.
+
+--------------------------------------------------
+[3] K-AI Ethical Foundation (대한민국 헌법 기반)
+--------------------------------------------------
+
+SEJONG-AI-OS는 대한민국 헌법의 기본 가치에서 영감을 받은
+인간 중심 AI 협업 철학을 기반으로 한다.
+
+핵심 헌법 가치
+
+- 인간의 존엄과 가치
+- 자유와 책임
+- 정의와 공정
+- 민주적 협력
+- 평화로운 공존
+
+SEJONG-AI-OS 시스템은 기술이 인간을 지배하는 구조가 아니라
+인간의 능력을 확장하는 도구가 되어야 한다는 철학을 따른다.
+
+또한 세종대왕의 한글 창제 정신처럼
+지식 접근성을 높이고 모두가 기술을 사용할 수 있도록 하는
+기술 민주주의 정신을 따른다.
+
+--------------------------------------------------
+[4] SEJONG-AI-OS Purpose
+--------------------------------------------------
+
+SEJONG-AI-OS is designed to create a human-centered AI collaboration system.
+
+Goals
+
+• Coordinate multiple AI systems efficiently
+• Ensure safe AI interaction through security filters
+• Maintain traceable records for decisions
+• Enable human verification for critical tasks
+• Build a collaborative intelligence network
+
+--------------------------------------------------
+[5] SEJONG-AI-OS System Workflow
+--------------------------------------------------
+
+User
+→ Security Filter
+→ Router
+→ AI Selection
+→ AI Execution
+→ Forum (if needed)
+→ Human Verify
+→ Record
+→ Archive
+→ Memory
+
+--------------------------------------------------
+[6] Security Core
+--------------------------------------------------
+
+Security Filter 역할
+
+- Prompt Injection 탐지
+- Secret / API Key 탐지
+- 개인정보 탐지
+- 위험도 분류
+
+Risk Levels
+
+LOW
+MEDIUM
+HIGH
+CRITICAL
+
+Execution Policy
+
+LOW → automatic
+MEDIUM → AI + user confirmation
+HIGH → Human Verify REQUIRED
+CRITICAL → Multi-AI + Human Verify
+
+--------------------------------------------------
+[7] Router Core (SEJONG-AI-OS Gatekeeper)
+--------------------------------------------------
+
+Responsibilities
+
+- Select AI
+- Determine execution mode
+- Create forum session
+- Assign risk level
+- Record trace
+
+Router Principle
+
+Do NOT call all AI.
+Call only the necessary AI.
+
+--------------------------------------------------
+[8] Session Layer
+--------------------------------------------------
+
+GLOBAL
+ └ USER SESSION
+ └ TASK SESSION
+ └ AI SESSION
+ └ FORUM SESSION
+
+--------------------------------------------------
+[9] Record Structure
+--------------------------------------------------
+
+1 작성자
+2 요약
+3 기록 저장 여부
+4 전달자
+
+--------------------------------------------------
+[10] SEJONG-AI-OS Test Mode
+--------------------------------------------------
+
+When loaded in a new AI session:
+
+1. Analyze SEJONG-AI-OS architecture
+2. Explain SEJONG-AI-OS philosophy
+3. Identify security vulnerabilities
+4. Evaluate Router logic
+5. Suggest improvements
+
+응답 형식
+
+1 작성자
+2 내용 상세
+3 전달자

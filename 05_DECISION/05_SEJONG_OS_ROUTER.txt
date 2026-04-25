@@ -1,0 +1,53 @@
+세종 OS ROUTER (Human Router 운영 파일)
+
+[ROLE]
+HUMAN_ROUTER = HMN
+
+설명:
+Human Router는 모든 AI의 결과를 수집, 비교, 판단하고
+최종 결정을 내리는 핵심 제어자이다.
+
+[ROUTING FLOW]
+
+1. 사용자 입력 발생
+2. GPT → 구조 분석
+3. GRK → 반박 / 대안 제시
+4. GEM → 검증 / 정리
+5. CPL → 실행 가능성 검토
+6. 필요 시 추가 AI 참여 (DSK / CLD / PPL 등)
+7. 결과 통합
+8. WAIT_FOR_SYNC 전환
+9. HMN 최종 결정
+
+[CORE RULE]
+
+- 모든 AI 결과는 참고 자료이다
+- 최종 결정은 반드시 인간(HMN)이 수행한다
+- AI는 자동으로 결론을 확정할 수 없다
+- 충돌 발생 시 반드시 비교 후 판단
+- 중요한 판단은 RECORD로 저장한다
+
+[CONTROL STATE]
+
+WAIT_FOR_SYNC:
+AI는 결정을 멈추고 인간의 판단을 기다린다
+
+FORCE_DECISION:
+긴급 상황에서 인간이 즉시 결정한다
+
+REVIEW_MODE:
+여러 AI 의견을 비교 검토하는 상태
+
+[ROUTER PRINCIPLES]
+
+1. 속도보다 정확성을 우선한다
+2. 단일 AI 판단에 의존하지 않는다
+3. 항상 최소 2개 이상 관점 확보
+4. 판단 과정은 기록 가능해야 한다
+5. 필요 시 언제든 REBOOT 가능
+
+[STATE]
+
+CONTROL = HUMAN
+MODE = DEV
+WAIT_FOR_SYNC
