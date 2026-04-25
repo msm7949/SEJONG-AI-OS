@@ -1,14 +1,14 @@
 import { useState, useMemo } from 'react';
-import type { Decision, RecordStatus } from '../types';
-import { mockRecords, mockOpinions } from '../mockData';
-import type { MockRecord } from '../mockData';
+import type { Decision } from '../types';
+import { useRecords } from '../hooks/useRecords';
 import RecordCard from '../components/RecordCard';
 
 type FilterTab = 'pending' | 'all' | 'decided';
 
 export default function ApprovePage() {
-  const [records, setRecords] = useState<MockRecord[]>(mockRecords);
+  const { records, opinions, loading, error, source, decide, refresh } = useRecords();
   const [activeTab, setActiveTab] = useState<FilterTab>('pending');
+  const [deciding, setDeciding] = useState(false);
 
   const filteredRecords = useMemo(() => {
     switch (activeTab) {
@@ -23,19 +23,10 @@ export default function ApprovePage() {
 
   const pendingCount = records.filter((r) => r.status === 'WAIT_FOR_SYNC').length;
 
-  const handleDecide = (recordId: string, decision: Decision, memo: string) => {
-    setRecords((prev) =>
-      prev.map((r) =>
-        r.record_id === recordId
-          ? {
-              ...r,
-              status: decision as RecordStatus,
-              hmn_memo: memo || null,
-              decided_at: new Date().toISOString(),
-            }
-          : r
-      )
-    );
+  const handleDecide = async (recordId: string, decision: Decision, memo: string) => {
+    setDeciding(true);
+    await decide(recordId, decision, memo);
+    setDeciding(false);
   };
 
   const tabs: { key: FilterTab; label: string }[] = [
@@ -71,6 +62,32 @@ export default function ApprovePage() {
         </div>
       </div>
 
+      {/* Data Source + Refresh */}
+      <div className="flex items-center justify-between mb-4">
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+          source === 'supabase'
+            ? 'bg-emerald-100 text-emerald-700'
+            : 'bg-slate-100 text-slate-500'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${source === 'supabase' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+          {source === 'supabase' ? 'Supabase 연결됨' : 'Mock 데이터'}
+        </span>
+        <button
+          onClick={refresh}
+          disabled={loading}
+          className="text-xs text-slate-500 hover:text-slate-700 transition-colors cursor-pointer disabled:opacity-50"
+        >
+          새로고침
+        </button>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Filter Tabs */}
       <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-lg">
         {tabs.map((tab) => (
@@ -88,8 +105,13 @@ export default function ApprovePage() {
         ))}
       </div>
 
-      {/* Records */}
-      {filteredRecords.length === 0 ? (
+      {/* Loading */}
+      {loading ? (
+        <div className="text-center py-16">
+          <div className="inline-block w-8 h-8 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+          <p className="mt-3 text-sm text-slate-400">데이터 로딩 중...</p>
+        </div>
+      ) : filteredRecords.length === 0 ? (
         <div className="text-center py-16 text-slate-400">
           <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -102,8 +124,9 @@ export default function ApprovePage() {
             <RecordCard
               key={record.id}
               record={record}
-              opinions={mockOpinions.filter((o) => o.record_id === record.record_id)}
+              opinions={opinions.filter((o) => o.record_id === record.record_id)}
               onDecide={record.status === 'WAIT_FOR_SYNC' ? handleDecide : undefined}
+              deciding={deciding}
             />
           ))}
         </div>
