@@ -22,6 +22,14 @@ export default function ApprovePage() {
   }, [records, activeTab]);
 
   const pendingCount = records.filter((r) => r.status === 'WAIT_FOR_SYNC').length;
+  const pendingRecords = records.filter((r) => r.status === 'WAIT_FOR_SYNC');
+  const levelSummary = {
+    l1: pendingRecords.filter((r) => r.level === 1).length,
+    l2: pendingRecords.filter((r) => r.level === 2).length,
+    l3: pendingRecords.filter((r) => r.level === 3).length,
+    l4: pendingRecords.filter((r) => r.level >= 4).length,
+  };
+  const urgentCount = levelSummary.l1 + levelSummary.l2;
 
   const handleDecide = async (recordId: string, decision: Decision, memo: string) => {
     setDeciding(true);
@@ -43,6 +51,9 @@ export default function ApprovePage() {
         <p className="mt-1 text-sm text-slate-500">
           AI 요청을 검토하고 승인/반려/보류 결정을 내립니다. 모든 최종 결정은 HMN이 합니다.
         </p>
+        <p className="mt-2 text-xs text-slate-400">
+          승인 버튼은 Supabase RPC `make_hmn_decision` 호출로 처리됩니다.
+        </p>
       </div>
 
       {/* Absolute Rule Banner */}
@@ -59,6 +70,27 @@ export default function ApprovePage() {
               AI는 절대 최종 결정을 내릴 수 없다. 모든 결정은 인간(HMN)이 한다.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* HMN Summary Card */}
+      <div className="mb-6 p-4 bg-white border border-slate-200 rounded-xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">HMN 요약 카드</p>
+            <p className="text-xs text-slate-500 mt-1">
+              CSR 통과는 자동 반영이 아니라, HMN이 판단할 재료가 준비되었다는 의미입니다.
+            </p>
+          </div>
+          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${urgentCount > 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+            {urgentCount > 0 ? `즉시 확인 ${urgentCount}건` : '즉시 확인 없음'}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 text-xs">
+          <div className="p-2 rounded-lg bg-red-50 border border-red-100 text-red-700">L1 Critical: {levelSummary.l1}</div>
+          <div className="p-2 rounded-lg bg-orange-50 border border-orange-100 text-orange-700">L2 High: {levelSummary.l2}</div>
+          <div className="p-2 rounded-lg bg-yellow-50 border border-yellow-100 text-yellow-700">L3 Medium: {levelSummary.l3}</div>
+          <div className="p-2 rounded-lg bg-blue-50 border border-blue-100 text-blue-700">L4 Low/Routine: {levelSummary.l4}</div>
         </div>
       </div>
 
