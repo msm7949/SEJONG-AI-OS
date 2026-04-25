@@ -1,0 +1,11 @@
+# SEJONG OS CODEOWNERS
+# HMN is the final reviewer/approver for protected branches.
+
+* @msm7949
+
+# Core policy and automation files require HMN ownership.
+/00_MASTER/ @msm7949
+/01_CORE/ @msm7949
+/05_DECISION/ @msm7949
+/07_SUPABASE/ @msm7949
+/08_N8N/ @msm7949

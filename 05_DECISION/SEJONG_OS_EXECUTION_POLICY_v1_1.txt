@@ -1,7 +1,7 @@
-SEJONG OS EXECUTION POLICY v1.2
+SEJONG OS EXECUTION POLICY v1.3
 [확정일: 2026-04-25] [승인: HMN]
 [작성: CLD + GPT 합의 / HMN 최종 승인]
-[v1.2 수정: HMN 판정 등급 L1~L4 체계 추가 — CSR]
+[v1.3 수정: Branch Protection 정책 코드화 — CSR]
 
 ==================================================
 절대 원칙 (ABSOLUTE RULE)
@@ -39,10 +39,9 @@ AI는 절대 최종 결정을 내릴 수 없다.
 규칙: 반드시 PR 생성 후 HMN 승인 대기
 
 [CSR - Cursor]
-허용: 로컬 코드 수정, 문서 정리, 커밋
-허용: HMN 명시 승인 시 main 직접 push 허용
-금지: HMN 승인 없는 main 직접 push, 배포 명령 실행
-규칙: 변경사항은 PR 또는 HMN 명시 승인 후 push
+허용: 로컬 코드 수정, 문서 정리, 커밋, PR 생성
+금지: main 직접 push, 배포 명령 실행
+규칙: 변경사항은 반드시 PR로 제출하고 HMN 승인 후 merge
 
 [GPT - ChatGPT]
 허용: 분석, 전략 제안, 구조 설계
@@ -54,7 +53,7 @@ AI는 절대 최종 결정을 내릴 수 없다.
 규칙: 모든 플로우는 WAIT_FOR_SYNC 포함 필수
 
 ==================================================
-3. PR 규칙 (필수 준수)
+3. PR 및 Branch Protection 규칙 (필수 준수)
 ==================================================
 모든 PR은 아래 순서를 따른다:
 
@@ -72,6 +71,15 @@ AI는 절대 최종 결정을 내릴 수 없다.
 - AI가 직접 머지 금지
 - CI 실패 상태에서 머지 금지
 - HMN 리뷰 없는 머지 금지
+- main 브랜치 직접 push 절대 금지
+
+main 보호 규칙:
+- Require a pull request before merging
+- Require status checks to pass before merging (CI 3/3)
+- Require approvals (최소 1명, HMN 또는 CODEOWNERS)
+- Include administrators (관리자 포함 규칙 적용)
+- Dismiss stale pull request approvals
+- Require linear history
 
 ==================================================
 4. HMN 판정 등급 (L1~L4)
@@ -190,3 +198,7 @@ v1.1 - 2026-04-25
 v1.2 - 2026-04-25
   HMN 판정 등급 L1~L4 체계 추가
   LEVEL 5를 HMN 판정 관점에서 L4로 통합 정의
+
+v1.3 - 2026-04-25
+  Branch Protection 정책 코드화
+  main 브랜치 직접 push 절대 금지 원칙 명시
