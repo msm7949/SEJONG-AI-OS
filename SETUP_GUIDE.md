@@ -15,6 +15,9 @@ mv README.md README_LEGACY_OLD.md
 
 이 폴더의 모든 파일을 `SEJONG-AI-OS/` 폴더에 복사:
 
+> 참고: 파일명에 `UNID`가 포함된 문서는 삭제 대상이 아니라 Legacy/OLD 참고용 아카이브입니다.
+> 운영 기준은 `SEJONG-AI-OS` 문서 체계를 우선 적용합니다.
+
 ```
 SEJONG-AI-OS/
 ├── README.md                    ← 교체

@@ -89,4 +89,4 @@ SEJONG-AI-OS Reboot는 기억 복사가 아니라,
 
 3 전달자
 Human Router 상훈
-→ GPT / CLD / GEM / GRK / DSK / DEV / CPL / Multi-AI System
+→ GPT / CLD / GEM / GRK / DSK / DVN / CPL / Multi-AI System

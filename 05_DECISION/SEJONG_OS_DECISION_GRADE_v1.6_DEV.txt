@@ -91,7 +91,7 @@ GRADE 5 → DEV에서만 생략 가능
 [분과별 GRADE 기본 배정]
 ==================================================
 
-외과 (GPT/DEV/CSR)     → GRADE 3-5 주담당
+외과 (GPT/DVN/CSR)     → GRADE 3-5 주담당
 내과 (DSK/PPL/CLD)     → GRADE 2-3 주담당
 정신건강/윤리 (GRK/CLD) → GRADE 1-2 주담당
 영상/문서 (GEM/QVL)    → GRADE 3-5 주담당

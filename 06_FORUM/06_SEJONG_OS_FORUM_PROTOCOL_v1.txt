@@ -5,7 +5,7 @@
 일관된 토론 구조, 추적 가능한 기록, 인간 최종 검증을 보장한다.
 
 [참여 AI]
-GPT, GEM, GRK, CLD, CPL, PPL, DSK, DEV, MNS, CSR, HMN
+GPT, GEM, GRK, CLD, CPL, PPL, DSK, DVN, MNS, CSR, HMN
 
 [기본 흐름]
 Human 질문 

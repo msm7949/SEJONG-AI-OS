@@ -258,4 +258,4 @@ SEJONG-AI-OS Reboot v3는 커널은 가볍게, 규칙은 선택적으로, 철학
 
 3 전달자
 Human Router 상훈
-→ GPT / CLD / GEM / GRK / DSK / DEV / CPL / Multi-AI System
+→ GPT / CLD / GEM / GRK / DSK / DVN / CPL / Multi-AI System

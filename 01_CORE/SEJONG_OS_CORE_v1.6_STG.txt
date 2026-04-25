@@ -35,7 +35,7 @@ AI는 절대 최종 결정을 내릴 수 없다.
 GPT = ChatGPT        GEM = Gemini
 GRK = Grok           CLD = Claude
 CPL = Copilot        PPL = Perplexity
-DSK = DeepSeek       DEV = Devin
+DSK = DeepSeek       DVN = Devin
 MNS = Manus          CSR = Cursor
 QVL = Qwen VL        HMN = Human Router
 

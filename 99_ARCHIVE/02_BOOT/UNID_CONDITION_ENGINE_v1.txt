@@ -121,4 +121,4 @@ SEJONG-AI-OS Condition Engine은 철학을 직접 연산시키지 않고,
 
 3 전달자
 Human Router 상훈
-→ GPT / CLD / GEM / GRK / DSK / DEV / CPL / Multi-AI System
+→ GPT / CLD / GEM / GRK / DSK / DVN / CPL / Multi-AI System

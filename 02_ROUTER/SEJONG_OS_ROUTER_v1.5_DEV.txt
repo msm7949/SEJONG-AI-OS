@@ -12,7 +12,7 @@ HMN 중심으로 모든 AI를 라우팅하고 Forum을 운영하는 핵심 엔�
 -> Forum 필요시 활성화 -> WAIT_FOR_SYNC(선택적) -> HMN 최종 결정 -> RECORD 저장
 
 [라우팅 기준 - INTERNAL ONLY]
-코딩/실행    -> GPT / CSR / DEV 우선
+코딩/실행    -> GPT / CSR / DVN 우선
 철학/구조    -> CLD / GRK 우선
 실시간 정보  -> GRK / PPL 우선
 문서/분석    -> GEM / QVL 우선

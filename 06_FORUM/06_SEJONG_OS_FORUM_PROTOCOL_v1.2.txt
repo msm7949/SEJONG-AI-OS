@@ -20,7 +20,7 @@ Human 질문
 → RECORD 저장
 
 [참여 AI]
-GPT GEM GRK CLD CPL PPL DSK DEV MNS CSR HMN
+GPT GEM GRK CLD CPL PPL DSK DVN MNS CSR HMN
 
 [토론 규칙]
 - 모든 AI는 독립된 의견만 제시한다 (합의 강요 금지)

@@ -11,7 +11,7 @@ CREATE TABLE records (
   -- 예시: SEJONG-CLD-20260425-143022-001
 
   ai_code       TEXT NOT NULL,
-  -- GPT | GEM | GRK | CLD | CPL | PPL | DSK | DEV | MNS | CSR | QVL
+  -- GPT | GEM | GRK | CLD | CPL | PPL | DSK | DVN | MNS | CSR | QVL
 
   level         INTEGER NOT NULL CHECK (level BETWEEN 1 AND 5),
   -- 1=Critical, 2=High, 3=Medium, 4=Low, 5=Routine

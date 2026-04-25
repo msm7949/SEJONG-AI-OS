@@ -11,7 +11,7 @@ assignees: msm7949
 SEJONG-
 
 ## 제안 AI
-<!-- GPT / GRK / CLD / GEM / DSK / PPL / CPL / DEV / MNS / CSR -->
+<!-- GPT / GRK / CLD / GEM / DSK / PPL / CPL / DVN / MNS / CSR -->
 
 
 ## LEVEL

@@ -95,7 +95,7 @@ sejong-os/
 ```
 GPT = ChatGPT    GEM = Gemini     GRK = Grok
 CLD = Claude     CPL = Copilot    PPL = Perplexity
-DSK = DeepSeek   DEV = Devin      MNS = Manus
+DSK = DeepSeek   DVN = Devin      MNS = Manus
 CSR = Cursor     QVL = Qwen VL    HMN = Human Router
 ```
 
