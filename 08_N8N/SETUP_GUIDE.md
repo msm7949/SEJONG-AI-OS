@@ -91,6 +91,8 @@ N8N 인스턴스 → **Settings** → **Variables**에 추가:
 | `KAKAO_WEBHOOK_URL` | `https://kapi.kakao.com/v2/api/talk/memo/default/send` | 카카오톡 API URL |
 | `NOTIFICATION_EMAIL` | `msm7949@gmail.com` | 알림 수신 이메일 |
 | `SMTP_FROM_EMAIL` | `noreply@sejong-os.kr` | 발신 이메일 주소 |
+| `VERCEL_DEPLOY_HOOK_URL` | `https://api.vercel.com/v1/integrations/deploy/...` | Vercel Production Deploy Hook |
+| `VERCEL_PREVIEW_URL` | `https://sejong-ai-os.vercel.app` | 배포 전 Discord Preview 링크 |
 
 > ⚠️ `SUPABASE_SERVICE_KEY`는 WAIT_FOR_SYNC RPC 호출에 필요합니다. service_role key를 사용하세요.
 
@@ -165,13 +167,17 @@ VALUES
 
 ## 7단계: Supabase 마이그레이션 실행
 
-Supabase SQL Editor에서 `07_SUPABASE/migration_v1.6.2_webhooks.sql` 전체 실행.
+Supabase SQL Editor에서 아래를 순서대로 실행:
+
+1. `07_SUPABASE/migration_v1.6.2_webhooks.sql`
+2. `07_SUPABASE/migration_v1.6.3_deploy_trigger.sql`
 
 이 마이그레이션에는:
 - `ensure_wait_for_sync` RPC — WAIT_FOR_SYNC 상태 확인/설정
 - `complete_wait_for_sync` RPC — WAIT_FOR_SYNC 해제 (HMN 결정 후)
 - `trg_notify_new_record` 트리거 — records INSERT 시 N8N 호출
 - `trg_notify_hmn_decision` 트리거 — hmn_decisions INSERT 시 N8N 호출
+- `deployment_eligible` payload — LEVEL 3~5 + APPROVED에서만 자동 배포
 
 ---
 
@@ -256,6 +262,8 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 KAKAO_WEBHOOK_URL=https://kapi.kakao.com/...
 NOTIFICATION_EMAIL=msm7949@gmail.com
 SMTP_FROM_EMAIL=noreply@sejong-os.kr
+VERCEL_DEPLOY_HOOK_URL=https://api.vercel.com/v1/integrations/deploy/...
+VERCEL_PREVIEW_URL=https://sejong-ai-os.vercel.app
 ```
 
 ## Supabase Vault 시크릿
