@@ -11,7 +11,10 @@
       "name": "1. HMN 결정 웹훅 수신",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [250, 300],
+      "position": [
+        250,
+        300
+      ],
       "notes": "Supabase hmn_decisions INSERT 트리거에서 호출. HMN이 승인 페이지에서 결정 후 자동 발동."
     },
     {
@@ -24,9 +27,18 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "options": {}
@@ -35,7 +47,10 @@
       "name": "2. WAIT_FOR_SYNC 해제",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [470, 300],
+      "position": [
+        470,
+        300
+      ],
       "notes": "records.status를 HMN 결정값 (APPROVED/REJECTED/HOLD)으로 업데이트. WAIT_FOR_SYNC 상태 해제."
     },
     {
@@ -57,7 +72,7 @@
             {
               "id": "discord_message",
               "name": "discord_message",
-              "value": "={{ {'APPROVED': '✅', 'REJECTED': '❌', 'HOLD': '⏸️'}[$('1. HMN 결정 웹훅 수신').item.json.body.decision] || '❓' }} **{{ {'APPROVED': '승인', 'REJECTED': '반려', 'HOLD': '보류'}[$('1. HMN 결정 웹훅 수신').item.json.body.decision] }}** — {{ $('1. HMN 결정 웹훅 수신').item.json.body.level_label }}\n\n**{{ $('1. HMN 결정 웹훅 수신').item.json.body.title }}**\n\n{{ $('1. HMN 결정 웹훅 수신').item.json.body.memo ? '💬 HMN 메모: ' + $('1. HMN 결정 웹훅 수신').item.json.body.memo : '' }}\n\n📋 `{{ $('1. HMN 결정 웹훅 수신').item.json.body.record_id }}`\n🤖 AI: {{ $('1. HMN 결정 웹훅 수신').item.json.body.ai_code }} | 모드: {{ $('1. HMN 결정 웹훅 수신').item.json.body.mode }}\n👤 결정자: {{ $('1. HMN 결정 웹훅 수신').item.json.body.hmn_id }}\n✅ WAIT_FOR_SYNC → **{{ $('1. HMN 결정 웹훅 수신').item.json.body.decision }}**",
+              "value": "={{ {'APPROVED': '✅', 'REJECTED': '❌', 'HOLD': '⏸️'}[$('1. HMN 결정 웹훅 수신').item.json.body.decision] || '❓' }} **{{ {'APPROVED': '승인', 'REJECTED': '반려', 'HOLD': '보류'}[$('1. HMN 결정 웹훅 수신').item.json.body.decision] }}** — {{ $('1. HMN 결정 웹훅 수신').item.json.body.level_label }}\n\n**{{ $('1. HMN 결정 웹훅 수신').item.json.body.title }}**\n\n{{ $('1. HMN 결정 웹훅 수신').item.json.body.memo ? '💬 HMN 메모: ' + $('1. HMN 결정 웹훅 수신').item.json.body.memo : '' }}\n\n📋 `{{ $('1. HMN 결정 웹훅 수신').item.json.body.record_id }}`\n🤖 AI: {{ $('1. HMN 결정 웹훅 수신').item.json.body.ai_code }} | 모드: {{ $('1. HMN 결정 웹훅 수신').item.json.body.mode }}\n👤 결정자: {{ $('1. HMN 결정 웹훅 수신').item.json.body.hmn_id }}\n✅ WAIT_FOR_SYNC → **{{ $('1. HMN 결정 웹훅 수신').item.json.body.decision }}**\n🚀 자동 배포 대상: {{ $('1. HMN 결정 웹훅 수신').item.json.body.deployment_eligible ? 'YES (L3~L5)' : 'NO (L1~L2 또는 비승인)' }}",
               "type": "string"
             },
             {
@@ -86,7 +101,10 @@
       "name": "3. 결과 메시지 포맷",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [690, 300]
+      "position": [
+        690,
+        300
+      ]
     },
     {
       "parameters": {
@@ -101,7 +119,10 @@
       "name": "4a. Discord 결과",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [920, 160]
+      "position": [
+        920,
+        160
+      ]
     },
     {
       "parameters": {
@@ -116,7 +137,10 @@
       "name": "4b. 카카오톡 결과",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [920, 300]
+      "position": [
+        920,
+        300
+      ]
     },
     {
       "parameters": {
@@ -131,32 +155,335 @@
       "name": "4c. 이메일 결과",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [920, 440],
+      "position": [
+        920,
+        440
+      ],
       "credentials": {
         "smtp": {
           "id": "SMTP_CREDENTIAL_ID",
           "name": "SMTP 설정"
         }
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "auto-deploy-eligible",
+              "leftValue": "={{ ($('1. HMN 결정 웹훅 수신').item.json.body.decision === 'APPROVED') && ( ($('1. HMN 결정 웹훅 수신').item.json.body.deployment_eligible === true) || ((Number($('1. HMN 결정 웹훅 수신').item.json.body.level) >= 3) && (Number($('1. HMN 결정 웹훅 수신').item.json.body.level) <= 5)) ) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-auto-deploy",
+      "name": "5. 자동 배포 대상 판정",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1130,
+        560
+      ],
+      "notes": "LEVEL 3~5 + APPROVED에서만 자동 배포 진행. LEVEL 1~2는 수동 배포."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"🛰️ 배포 준비 — Preview 확인 요청\",\n    \"description\": {{ JSON.stringify('Record: ' + $('1. HMN 결정 웹훅 수신').item.json.body.record_id + '\\n제목: ' + $('1. HMN 결정 웹훅 수신').item.json.body.title + '\\nLEVEL: ' + $('1. HMN 결정 웹훅 수신').item.json.body.level_label + '\\nPreview: ' + ($env.VERCEL_PREVIEW_URL || '미설정') + '\\nHMN 승인 완료, 자동 배포 트리거 시작') }},\n    \"color\": 3447003,\n    \"footer\": { \"text\": \"세종 OS v1.7 — 배포 전 Preview 우선 알림\" }\n  }]\n}",
+        "options": {}
+      },
+      "id": "discord-preview",
+      "name": "6. 배포 전 Preview 알림 (Discord)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        500
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"🛑 자동 배포 제외 — HMN 수동 확인 필요\",\n    \"description\": {{ JSON.stringify('Record: ' + $('1. HMN 결정 웹훅 수신').item.json.body.record_id + '\\nLEVEL: ' + $('1. HMN 결정 웹훅 수신').item.json.body.level_label + '\\n결정: ' + $('1. HMN 결정 웹훅 수신').item.json.body.decision + '\\n정책상 자동 배포 제외 (LEVEL 1~2 또는 비승인). HMN 수동 배포 확인 필요.') }},\n    \"color\": 16744192,\n    \"footer\": { \"text\": \"세종 OS v1.7 — EXECUTION POLICY 준수\" }\n  }]\n}",
+        "options": {}
+      },
+      "id": "discord-manual-confirm",
+      "name": "6b. 수동 배포 확인 알림 (Discord)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        640
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VERCEL_DEPLOY_HOOK_URL }}",
+        "sendBody": false,
+        "options": {}
+      },
+      "id": "vercel-deploy-hook",
+      "name": "7. Vercel Deploy Hook 호출",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1590,
+        500
+      ],
+      "continueOnFail": true,
+      "notes": "자동 배포는 APPROVED + LEVEL 3~5에서만 호출"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "deploy-failed",
+              "leftValue": "={{ !!$json.error }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-deploy-failed",
+      "name": "8. 배포 결과 판정",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1810,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/records?record_id=eq.{{ $('1. HMN 결정 웹훅 수신').item.json.body.record_id }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"WAIT_FOR_SYNC\",\n  \"hmn_memo\": {{ JSON.stringify(( $('1. HMN 결정 웹훅 수신').item.json.body.memo || '' ) + ' | deploy_failed_rollback') }}\n}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rollback-wait",
+      "name": "9. 실패 롤백 (WAIT_FOR_SYNC 복귀)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2040,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"❌ Vercel 배포 실패 — WAIT_FOR_SYNC 복귀\",\n    \"description\": {{ JSON.stringify('Record: ' + $('1. HMN 결정 웹훅 수신').item.json.body.record_id + '\\n오류: ' + ($('7. Vercel Deploy Hook 호출').item.json.error || 'unknown') + '\\n상태를 WAIT_FOR_SYNC로 복구했습니다.') }},\n    \"color\": 15548997\n  }]\n}",
+        "options": {}
+      },
+      "id": "discord-deploy-failed",
+      "name": "10a. 배포 실패 알림 (Discord)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2260,
+        440
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"✅ Vercel 배포 트리거 완료\",\n    \"description\": {{ JSON.stringify('Record: ' + $('1. HMN 결정 웹훅 수신').item.json.body.record_id + '\\nLEVEL: ' + $('1. HMN 결정 웹훅 수신').item.json.body.level_label + '\\nProduction deploy hook 호출 완료') }},\n    \"color\": 5763719\n  }]\n}",
+        "options": {}
+      },
+      "id": "discord-deploy-success",
+      "name": "10b. 배포 성공 알림 (Discord)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2040,
+        600
+      ],
+      "continueOnFail": true
     }
   ],
   "connections": {
     "1. HMN 결정 웹훅 수신": {
       "main": [
-        [{ "node": "2. WAIT_FOR_SYNC 해제", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "2. WAIT_FOR_SYNC 해제",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "2. WAIT_FOR_SYNC 해제": {
       "main": [
-        [{ "node": "3. 결과 메시지 포맷", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "3. 결과 메시지 포맷",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "3. 결과 메시지 포맷": {
       "main": [
         [
-          { "node": "4a. Discord 결과", "type": "main", "index": 0 },
-          { "node": "4b. 카카오톡 결과", "type": "main", "index": 0 },
-          { "node": "4c. 이메일 결과", "type": "main", "index": 0 }
+          {
+            "node": "4a. Discord 결과",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "4b. 카카오톡 결과",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "4c. 이메일 결과",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "5. 자동 배포 대상 판정",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. 자동 배포 대상 판정": {
+      "main": [
+        [
+          {
+            "node": "6. 배포 전 Preview 알림 (Discord)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "6b. 수동 배포 확인 알림 (Discord)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. 배포 전 Preview 알림 (Discord)": {
+      "main": [
+        [
+          {
+            "node": "7. Vercel Deploy Hook 호출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Vercel Deploy Hook 호출": {
+      "main": [
+        [
+          {
+            "node": "8. 배포 결과 판정",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8. 배포 결과 판정": {
+      "main": [
+        [
+          {
+            "node": "9. 실패 롤백 (WAIT_FOR_SYNC 복귀)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "10b. 배포 성공 알림 (Discord)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9. 실패 롤백 (WAIT_FOR_SYNC 복귀)": {
+      "main": [
+        [
+          {
+            "node": "10a. 배포 실패 알림 (Discord)",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     }
@@ -165,8 +492,14 @@
     "executionOrder": "v1"
   },
   "tags": [
-    { "name": "세종OS" },
-    { "name": "WAIT_FOR_SYNC" },
-    { "name": "알림" }
+    {
+      "name": "세종OS"
+    },
+    {
+      "name": "WAIT_FOR_SYNC"
+    },
+    {
+      "name": "알림"
+    }
   ]
 }

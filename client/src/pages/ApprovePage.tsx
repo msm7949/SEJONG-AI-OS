@@ -43,6 +43,9 @@ export default function ApprovePage() {
         <p className="mt-1 text-sm text-slate-500">
           AI 요청을 검토하고 승인/반려/보류 결정을 내립니다. 모든 최종 결정은 HMN이 합니다.
         </p>
+        <p className="mt-2 text-xs text-slate-400">
+          승인 버튼은 Supabase RPC `make_hmn_decision` 호출로 처리됩니다.
+        </p>
       </div>
 
       {/* Absolute Rule Banner */}
