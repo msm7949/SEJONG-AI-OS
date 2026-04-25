@@ -4,6 +4,20 @@
 
 ---
 
+## ✅ 구현 완료
+
+| 워크플로우 | 파일 | 상태 |
+|-----------|------|------|
+| 새 레코드 → 3채널 알림 | `workflow_new_record_alert.json` | 구현 완료 |
+| HMN 결정 → 3채널 알림 | `workflow_hmn_decision_alert.json` | 구현 완료 |
+| Supabase 웹훅 트리거 | `07_SUPABASE/migration_v1.6.2_webhooks.sql` | 구현 완료 |
+
+알림 채널: **카카오톡 + Discord + 이메일** (3채널 동시 발송)
+
+설정 방법: [SETUP_GUIDE.md](./SETUP_GUIDE.md) 참고
+
+---
+
 ## 워크플로우 1 — AI 의견 수집 → HMN 알림
 
 ```
@@ -68,11 +82,17 @@
 ## N8N 환경변수 설정
 
 ```
-SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_SERVICE_KEY=eyJ...  (service_role key)
+# 기존 (Phase 2 전체 자동화용)
+SUPABASE_URL=https://neexjnidnaopukhsdmhz.supabase.co
+SUPABASE_SERVICE_KEY=eyJ...  (service_role key — Supabase Settings → API)
 GITHUB_TOKEN=ghp_...
-KAKAO_WEBHOOK_URL=https://...  (또는 슬랙 webhook)
-VERCEL_APPROVE_URL=https://your-app.vercel.app
+VERCEL_APPROVE_URL=https://sejong-ai-os.vercel.app
+
+# 알림 워크플로우용 (v1.6.2 추가)
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+KAKAO_WEBHOOK_URL=https://kapi.kakao.com/... (또는 카카오워크 웹훅)
+NOTIFICATION_EMAIL=msm7949@gmail.com
+SMTP_FROM_EMAIL=noreply@sejong-os.kr
 ```
 
 ---

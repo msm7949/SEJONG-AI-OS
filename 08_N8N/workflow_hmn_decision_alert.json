@@ -1,0 +1,142 @@
+{
+  "name": "세종 OS — HMN 결정 알림 (3채널)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sejong-hmn-decision",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Supabase 웹훅 수신",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "decision_emoji",
+              "name": "decision_emoji",
+              "value": "={{ {'APPROVED': '✅', 'REJECTED': '❌', 'HOLD': '⏸️'}[$json.body.decision] || '❓' }}",
+              "type": "string"
+            },
+            {
+              "id": "decision_color",
+              "name": "decision_color",
+              "value": "={{ {'APPROVED': 5763719, 'REJECTED': 15548997, 'HOLD': 16776960}[$json.body.decision] || 9807270 }}",
+              "type": "number"
+            },
+            {
+              "id": "discord_message",
+              "name": "discord_message",
+              "value": "={{ {'APPROVED': '✅', 'REJECTED': '❌', 'HOLD': '⏸️'}[$json.body.decision] || '❓' }} **{{ $json.body.decision_label }}** — {{ $json.body.level_label }}\n\n**{{ $json.body.title }}**\n\n{{ $json.body.memo ? '💬 HMN 메모: ' + $json.body.memo : '' }}\n\n📋 `{{ $json.body.record_id }}`\n🤖 AI: {{ $json.body.ai_code }} | 모드: {{ $json.body.mode }}\n👤 결정자: {{ $json.body.hmn_id }}",
+              "type": "string"
+            },
+            {
+              "id": "email_subject",
+              "name": "email_subject",
+              "value": "=[세종 OS] {{ $json.body.decision_label }}: {{ $json.body.level_label }} — {{ $json.body.title }}",
+              "type": "string"
+            },
+            {
+              "id": "email_body",
+              "name": "email_body",
+              "value": "=<h2>{{ {'APPROVED': '✅', 'REJECTED': '❌', 'HOLD': '⏸️'}[$json.body.decision] || '' }} HMN 결정: {{ $json.body.decision_label }}</h2><h3>{{ $json.body.title }}</h3><hr><ul><li>Record ID: {{ $json.body.record_id }}</li><li>LEVEL: {{ $json.body.level_label }}</li><li>AI: {{ $json.body.ai_code }}</li><li>모드: {{ $json.body.mode }}</li><li>결정: <strong>{{ $json.body.decision_label }}</strong></li><li>결정자: {{ $json.body.hmn_id }}</li>{{ $json.body.memo ? '<li>HMN 메모: ' + $json.body.memo + '</li>' : '' }}</ul><p><a href=\"{{ $json.body.approve_url }}\">승인 페이지 열기</a></p>",
+              "type": "string"
+            },
+            {
+              "id": "kakao_message",
+              "name": "kakao_message",
+              "value": "=[세종 OS HMN 결정]\n{{ {'APPROVED': '✅', 'REJECTED': '❌', 'HOLD': '⏸️'}[$json.body.decision] || '' }} {{ $json.body.decision_label }}\n{{ $json.body.level_label }} — {{ $json.body.title }}\n{{ $json.body.memo ? 'HMN 메모: ' + $json.body.memo : '' }}\n결정자: {{ $json.body.hmn_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-message",
+      "name": "메시지 포맷",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"🏛️ HMN 결정 완료\",\n    \"description\": {{ JSON.stringify($json.discord_message) }},\n    \"color\": {{ $json.decision_color }},\n    \"footer\": { \"text\": \"세종 OS v1.6 — 절대 원칙: 모든 결정은 HMN이 한다\" },\n    \"timestamp\": \"{{ $input.first().json.body.decided_at }}\"\n  }]\n}",
+        "options": {}
+      },
+      "id": "discord-notify",
+      "name": "Discord 알림",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KAKAO_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"object_type\": \"text\",\n  \"text\": {{ JSON.stringify($json.kakao_message) }},\n  \"link\": {\n    \"web_url\": \"{{ $input.first().json.body.approve_url }}\",\n    \"mobile_web_url\": \"{{ $input.first().json.body.approve_url }}\"\n  },\n  \"button_title\": \"승인 페이지 열기\"\n}",
+        "options": {}
+      },
+      "id": "kakao-notify",
+      "name": "카카오톡 알림",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 300],
+      "notes": "카카오톡 API 설정 필요. SETUP_GUIDE.md 참고."
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM_EMAIL }}",
+        "toEmail": "={{ $env.NOTIFICATION_EMAIL }}",
+        "subject": "={{ $json.email_subject }}",
+        "emailType": "html",
+        "html": "={{ $json.email_body }}",
+        "options": {}
+      },
+      "id": "email-notify",
+      "name": "이메일 알림",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [700, 440],
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "SMTP 설정"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Supabase 웹훅 수신": {
+      "main": [
+        [{ "node": "메시지 포맷", "type": "main", "index": 0 }]
+      ]
+    },
+    "메시지 포맷": {
+      "main": [
+        [
+          { "node": "Discord 알림", "type": "main", "index": 0 },
+          { "node": "카카오톡 알림", "type": "main", "index": 0 },
+          { "node": "이메일 알림", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "세종OS" },
+    { "name": "알림" }
+  ]
+}
