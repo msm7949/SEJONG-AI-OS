@@ -94,7 +94,9 @@
       "name": "4a. Discord 알림",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [920, 160]
+      "position": [920, 100],
+      "continueOnFail": true,
+      "notes": "실패해도 WAIT_FOR_SYNC 진입에 영향 없음 (fire-and-forget)"
     },
     {
       "parameters": {
@@ -109,7 +111,9 @@
       "name": "4b. 카카오톡 알림",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [920, 300]
+      "position": [920, 200],
+      "continueOnFail": true,
+      "notes": "실패해도 WAIT_FOR_SYNC 진입에 영향 없음 (fire-and-forget)"
     },
     {
       "parameters": {
@@ -124,7 +128,9 @@
       "name": "4c. 이메일 알림",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [920, 440],
+      "position": [920, 300],
+      "continueOnFail": true,
+      "notes": "실패해도 WAIT_FOR_SYNC 진입에 영향 없음 (fire-and-forget)",
       "credentials": {
         "smtp": {
           "id": "SMTP_CREDENTIAL_ID",
@@ -289,13 +295,9 @@
         [
           { "node": "4a. Discord 알림", "type": "main", "index": 0 },
           { "node": "4b. 카카오톡 알림", "type": "main", "index": 0 },
-          { "node": "4c. 이메일 알림", "type": "main", "index": 0 }
+          { "node": "4c. 이메일 알림", "type": "main", "index": 0 },
+          { "node": "5. HMN 응답 대기", "type": "main", "index": 0 }
         ]
-      ]
-    },
-    "4a. Discord 알림": {
-      "main": [
-        [{ "node": "5. HMN 응답 대기", "type": "main", "index": 0 }]
       ]
     },
     "5. HMN 응답 대기": {
