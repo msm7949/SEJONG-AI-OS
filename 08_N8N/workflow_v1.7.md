@@ -97,4 +97,4 @@ DISCORD_WEBHOOK_URL=...
 참조 파일:
 - `.github/CODEOWNERS`
 - `.github/branch-protection.main.yml`
-
+- `.github/BRANCH_PROTECTION_EVIDENCE.md`
