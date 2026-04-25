@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import type { AiOpinion, Decision, DecisionLevel, Stance } from '../types';
+import type { SejongRecord, AiOpinion, Decision, DecisionLevel, Stance } from '../types';
 import { AI_NAMES, LEVEL_LABELS, STATUS_STYLES, STANCE_STYLES } from '../types';
-import type { MockRecord } from '../mockData';
 
 interface RecordCardProps {
-  record: MockRecord;
+  record: SejongRecord;
   opinions: AiOpinion[];
   onDecide?: (recordId: string, decision: Decision, memo: string) => void;
+  deciding?: boolean;
 }
 
-export default function RecordCard({ record, opinions, onDecide }: RecordCardProps) {
+export default function RecordCard({ record, opinions, onDecide, deciding }: RecordCardProps) {
   const [memo, setMemo] = useState('');
   const [expanded, setExpanded] = useState(false);
   const isPending = record.status === 'WAIT_FOR_SYNC';
@@ -128,21 +128,24 @@ export default function RecordCard({ record, opinions, onDecide }: RecordCardPro
           <div className="flex flex-wrap gap-2 mt-3">
             <button
               onClick={() => handleDecision('APPROVED')}
-              className="flex-1 min-w-[100px] px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+              disabled={deciding}
+              className="flex-1 min-w-[100px] px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              승인
+              {deciding ? '처리 중...' : '승인'}
             </button>
             <button
               onClick={() => handleDecision('HOLD')}
-              className="flex-1 min-w-[100px] px-4 py-2.5 bg-slate-500 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+              disabled={deciding}
+              className="flex-1 min-w-[100px] px-4 py-2.5 bg-slate-500 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              보류
+              {deciding ? '처리 중...' : '보류'}
             </button>
             <button
               onClick={() => handleDecision('REJECTED')}
-              className="flex-1 min-w-[100px] px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+              disabled={deciding}
+              className="flex-1 min-w-[100px] px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              반려
+              {deciding ? '처리 중...' : '반려'}
             </button>
           </div>
         </div>

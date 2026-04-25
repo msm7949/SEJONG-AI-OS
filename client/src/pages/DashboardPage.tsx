@@ -1,16 +1,18 @@
 import { Link } from 'react-router-dom';
-import { mockRecords, mockOpinions } from '../mockData';
+import { useRecords } from '../hooks/useRecords';
 
 export default function DashboardPage() {
-  const pending = mockRecords.filter((r) => r.status === 'WAIT_FOR_SYNC').length;
-  const approved = mockRecords.filter((r) => r.status === 'APPROVED').length;
-  const rejected = mockRecords.filter((r) => r.status === 'REJECTED').length;
+  const { records, opinions, loading, source } = useRecords();
+
+  const pending = records.filter((r) => r.status === 'WAIT_FOR_SYNC').length;
+  const approved = records.filter((r) => r.status === 'APPROVED').length;
+  const rejected = records.filter((r) => r.status === 'REJECTED').length;
 
   const stats = [
     { label: '대기 중', value: pending, color: 'bg-amber-500', textColor: 'text-amber-600' },
     { label: '승인', value: approved, color: 'bg-green-500', textColor: 'text-green-600' },
     { label: '반려', value: rejected, color: 'bg-red-500', textColor: 'text-red-600' },
-    { label: 'AI 의견', value: mockOpinions.length, color: 'bg-indigo-500', textColor: 'text-indigo-600' },
+    { label: 'AI 의견', value: opinions.length, color: 'bg-indigo-500', textColor: 'text-indigo-600' },
   ];
 
   return (
@@ -23,15 +25,22 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
-        {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
-            <div className={`w-2 h-2 rounded-full ${stat.color} mb-3`} />
-            <p className={`text-2xl sm:text-3xl font-bold ${stat.textColor}`}>{stat.value}</p>
-            <p className="text-xs text-slate-500 mt-1">{stat.label}</p>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="text-center py-8">
+          <div className="inline-block w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+          <p className="mt-2 text-sm text-slate-400">데이터 로딩 중...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+          {stats.map((stat) => (
+            <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
+              <div className={`w-2 h-2 rounded-full ${stat.color} mb-3`} />
+              <p className={`text-2xl sm:text-3xl font-bold ${stat.textColor}`}>{stat.value}</p>
+              <p className="text-xs text-slate-500 mt-1">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 mb-8">
@@ -85,8 +94,10 @@ export default function DashboardPage() {
             <p>GitHub + Supabase + N8N + Vercel</p>
           </div>
           <div>
-            <p className="text-slate-400 text-xs mb-1">절대 원칙</p>
-            <p className="text-amber-400">모든 결정은 HMN이 한다</p>
+            <p className="text-slate-400 text-xs mb-1">데이터 소스</p>
+            <p className={source === 'supabase' ? 'text-emerald-400' : 'text-amber-400'}>
+              {source === 'supabase' ? 'Supabase 연결됨' : 'Mock 데이터 (Supabase 미설정)'}
+            </p>
           </div>
         </div>
       </div>
