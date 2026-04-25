@@ -1,0 +1,22 @@
+# GitHub branch protection desired state for `main`
+# Apply manually in GitHub Settings > Branches, or via GitHub API.
+
+branch: main
+protection:
+  enforce_admins: true
+  required_pull_request_reviews:
+    required_approving_review_count: 1
+    dismiss_stale_reviews: true
+    require_code_owner_reviews: true
+  required_status_checks:
+    strict: true
+    contexts:
+      - ci / test (1)
+      - ci / test (2)
+      - ci / test (3)
+  required_linear_history: true
+  allow_force_pushes: false
+  allow_deletions: false
+  block_creations: false
+  required_conversation_resolution: true
+  lock_branch: false

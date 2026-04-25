@@ -83,3 +83,18 @@ DISCORD_WEBHOOK_URL=...
 - [ ] Deploy Hook 실패 강제 시 `WAIT_FOR_SYNC` 롤백 확인
 - [ ] 배포 성공 시 Discord 성공 알림 확인
 
+---
+
+## Branch Protection 연계 (정책 코드화)
+
+운영 안전성을 위해 `main` 브랜치는 반드시 보호 규칙을 적용한다.
+
+- direct push 차단 (PR 필수)
+- CI 3/3 통과 필수
+- 최소 1명 승인 필수 (HMN/CODEOWNER)
+- Include administrators 활성화
+
+참조 파일:
+- `.github/CODEOWNERS`
+- `.github/branch-protection.main.yml`
+
