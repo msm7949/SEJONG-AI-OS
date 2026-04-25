@@ -1,0 +1,289 @@
+{
+  "name": "세종 OS WF3 — AI 포럼 자동화",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sejong-ai-forum",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "1. Webhook 수신",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.level }}",
+              "rightValue": 2,
+              "operator": { "type": "number", "operation": "lte" }
+            }
+          ]
+        }
+      },
+      "id": "level-check",
+      "name": "2. LEVEL 라우터",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer ${OPENAI_API_KEY}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'system', content: '당신은 세종 OS AI 포럼 참여자 GPT입니다. 주어진 안건에 대해 분석, 추론, 리스크 평가를 제공하고 stance(AGREE/DISAGREE/NEUTRAL/CONDITIONAL) 중 하나를 선택하세요. JSON 형식으로 응답: {\"opinion\": \"...\", \"stance\": \"...\", \"confidence\": 0.0~1.0, \"risk_flags\": []}' }, { role: 'user', content: '안건: ' + $json.body.title + '\\n내용: ' + $json.body.content + '\\nAI코드: ' + $json.body.ai_code + '\\n레벨: L' + $json.body.level }], temperature: 0.7, max_tokens: 500 }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "gpt-call",
+      "name": "3a. GPT 의견",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: '당신은 세종 OS AI 포럼 참여자 GEM입니다. 주어진 안건에 대해 분석, 추론, 리스크 평가를 제공하고 stance(AGREE/DISAGREE/NEUTRAL/CONDITIONAL) 중 하나를 선택하세요. JSON 형식으로 응답: {\"opinion\": \"...\", \"stance\": \"...\", \"confidence\": 0.0~1.0, \"risk_flags\": []}\\n\\n안건: ' + $json.body.title + '\\n내용: ' + $json.body.content + '\\nAI코드: ' + $json.body.ai_code + '\\n레벨: L' + $json.body.level }] }] }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "gem-call",
+      "name": "3b. GEM 의견",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "${ANTHROPIC_API_KEY}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 500, messages: [{ role: 'user', content: '당신은 세종 OS AI 포럼 참여자 CLD입니다. 주어진 안건에 대해 분석, 추론, 리스크 평가를 제공하고 stance(AGREE/DISAGREE/NEUTRAL/CONDITIONAL) 중 하나를 선택하세요. JSON 형식으로 응답: {\"opinion\": \"...\", \"stance\": \"...\", \"confidence\": 0.0~1.0, \"risk_flags\": []}\\n\\n안건: ' + $json.body.title + '\\n내용: ' + $json.body.content + '\\nAI코드: ' + $json.body.ai_code + '\\n레벨: L' + $json.body.level }] }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "cld-call",
+      "name": "3c. CLD 의견",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.x.ai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer ${XAI_API_KEY}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'grok-3-mini', messages: [{ role: 'system', content: '당신은 세종 OS AI 포럼 참여자 GRK입니다. 주어진 안건에 대해 분석, 추론, 리스크 평가를 제공하고 stance(AGREE/DISAGREE/NEUTRAL/CONDITIONAL) 중 하나를 선택하세요. JSON 형식으로 응답: {\"opinion\": \"...\", \"stance\": \"...\", \"confidence\": 0.0~1.0, \"risk_flags\": []}' }, { role: 'user', content: '안건: ' + $json.body.title + '\\n내용: ' + $json.body.content + '\\nAI코드: ' + $json.body.ai_code + '\\n레벨: L' + $json.body.level }], temperature: 0.7, max_tokens: 500 }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "grk-call",
+      "name": "3d. GRK 의견",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 700],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "waitAll"
+      },
+      "id": "merge-l1",
+      "name": "4. 의견 수집 (L1-L2)",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "${ANTHROPIC_API_KEY}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 500, messages: [{ role: 'user', content: '당신은 세종 OS AI 포럼 참여자 CLD입니다. 주어진 안건에 대해 분석하고 stance를 선택하세요. JSON: {\"opinion\": \"...\", \"stance\": \"AGREE|DISAGREE|NEUTRAL|CONDITIONAL\", \"confidence\": 0.0~1.0, \"risk_flags\": []}\\n\\n안건: ' + $json.body.title + '\\n내용: ' + $json.body.content }] }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "cld-call-l3",
+      "name": "3e. CLD 의견 (L3)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 900],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.supabase_url }}/rest/v1/ai_opinions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $json.supabase_service_key }}" },
+            { "name": "Authorization", "value": "Bearer {{ $json.supabase_service_key }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.opinions_to_insert) }}",
+        "options": {}
+      },
+      "id": "supabase-insert",
+      "name": "5. Supabase INSERT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://discord.com/api/webhooks/1497505700849647757/umhLsNYTt-axm06vaaZLZINsNZI1JKVbMGtzptmmCu52pmVrU7Gl7gVgaejhG_K1-CCq",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ embeds: [{ title: '🏛️ AI 포럼 완료 — ' + $json.body.title, description: '**Record:** ' + $json.body.record_id + '\\n**Level:** L' + $json.body.level + '\\n**참여 AI:** ' + $json.forum_participants.join(', ') + '\\n**합의도:** ' + $json.consensus_level + '/3\\n\\n🔗 [HMN 승인 페이지](https://unidlabs.ai/approve)', color: 6570239 }] }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "discord-forum",
+      "name": "6a. Discord 포럼 알림",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "sendTo": "msm7949@gmail.com",
+        "subject": "=세종 OS AI 포럼 완료 — {{ $json.body.title }}",
+        "emailType": "text",
+        "message": "=AI 포럼 결과 보고\n\nRecord: {{ $json.body.record_id }}\nLevel: L{{ $json.body.level }}\n참여 AI: {{ $json.forum_participants.join(', ') }}\n합의도: {{ $json.consensus_level }}/3\n\nHMN 승인 페이지: https://unidlabs.ai/approve"
+      },
+      "id": "gmail-forum",
+      "name": "6b. Gmail 포럼 알림",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1440, 300],
+      "credentials": {
+        "gmailOAuth2": { "id": "3sWvwEBCt6UwDEla", "name": "Gmail account" }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kakaowork.com/v1/messages.send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer ${KAKAOWORK_APP_KEY}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ conversation_id: $json.kakao_conversation_id || 0, text: '🏛️ AI 포럼 완료\\n\\nRecord: ' + $json.body.record_id + '\\nLevel: L' + $json.body.level + '\\n참여 AI: ' + $json.forum_participants.join(', ') + '\\n합의도: ' + $json.consensus_level + '/3\\n\\n👉 https://unidlabs.ai/approve' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "kakao-forum",
+      "name": "6c. 카카오워크 포럼 알림",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, record_id: $json.body.record_id, forum_complete: true, participants: $json.forum_participants, consensus_level: $json.consensus_level }) }}"
+      },
+      "id": "respond",
+      "name": "7. 응답 반환",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1700, 300]
+    }
+  ],
+  "connections": {
+    "1. Webhook 수신": { "main": [[{ "node": "2. LEVEL 라우터", "type": "main", "index": 0 }]] },
+    "2. LEVEL 라우터": {
+      "main": [
+        [
+          { "node": "3a. GPT 의견", "type": "main", "index": 0 },
+          { "node": "3b. GEM 의견", "type": "main", "index": 0 },
+          { "node": "3c. CLD 의견", "type": "main", "index": 0 },
+          { "node": "3d. GRK 의견", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "3e. CLD 의견 (L3)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "3a. GPT 의견": { "main": [[{ "node": "4. 의견 수집 (L1-L2)", "type": "main", "index": 0 }]] },
+    "3b. GEM 의견": { "main": [[{ "node": "4. 의견 수집 (L1-L2)", "type": "main", "index": 1 }]] },
+    "3c. CLD 의견": { "main": [[{ "node": "4. 의견 수집 (L1-L2)", "type": "main", "index": 2 }]] },
+    "3d. GRK 의견": { "main": [[{ "node": "4. 의견 수집 (L1-L2)", "type": "main", "index": 3 }]] },
+    "4. 의견 수집 (L1-L2)": { "main": [[{ "node": "5. Supabase INSERT", "type": "main", "index": 0 }]] },
+    "3e. CLD 의견 (L3)": { "main": [[{ "node": "5. Supabase INSERT", "type": "main", "index": 0 }]] },
+    "5. Supabase INSERT": {
+      "main": [[
+        { "node": "6a. Discord 포럼 알림", "type": "main", "index": 0 },
+        { "node": "6b. Gmail 포럼 알림", "type": "main", "index": 0 },
+        { "node": "6c. 카카오워크 포럼 알림", "type": "main", "index": 0 },
+        { "node": "7. 응답 반환", "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Seoul"
+  },
+  "tags": [{ "name": "세종OS" }, { "name": "AI포럼" }]
+}
