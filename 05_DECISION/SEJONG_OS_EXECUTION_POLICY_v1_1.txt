@@ -1,6 +1,7 @@
-SEJONG OS EXECUTION POLICY v1.0
+SEJONG OS EXECUTION POLICY v1.1
 [확정일: 2026-04-25] [승인: HMN]
 [작성: CLD + GPT 합의 / HMN 최종 승인]
+[v1.1 수정: CSR main push 정책 명확화 — DVN]
 
 ==================================================
 절대 원칙 (ABSOLUTE RULE)
@@ -39,8 +40,9 @@ AI는 절대 최종 결정을 내릴 수 없다.
 
 [CSR - Cursor]
 허용: 로컬 코드 수정, 문서 정리, 커밋
-금지: main 직접 push, 배포 명령 실행
-규칙: 변경사항은 PR 또는 HMN 확인 후 push
+허용: HMN 명시 승인 시 main 직접 push 허용
+금지: HMN 승인 없는 main 직접 push, 배포 명령 실행
+규칙: 변경사항은 PR 또는 HMN 명시 승인 후 push
 
 [GPT - ChatGPT]
 허용: 분석, 전략 제안, 구조 설계
@@ -154,3 +156,7 @@ v1.0 - 2026-04-25
   최초 작성 (CLD + GPT 합의)
   HMN 최종 승인
   세종 OS 운영 단계 진입 기념 제정
+
+v1.1 - 2026-04-25
+  CSR main push 정책 명확화: HMN 명시 승인 시 직접 push 허용
+  CSR 감사 결과 반영 (DVN)

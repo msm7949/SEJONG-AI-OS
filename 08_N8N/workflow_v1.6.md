@@ -8,80 +8,148 @@
 
 | 워크플로우 | 파일 | 플로우 | 상태 |
 |-----------|------|--------|------|
-| AI 요청 파이프라인 | `workflow_new_record_alert.json` | 웹훅→WAIT_FOR_SYNC→알림→HMN대기→완료 | 구현 완료 |
-| HMN 결정 Resume | `workflow_hmn_decision_alert.json` | 웹훅→WAIT_FOR_SYNC 해제→결정 알림 | 구현 완료 |
-| Supabase 트리거+RPC | `07_SUPABASE/migration_v1.6.2_webhooks.sql` | 트리거+ensure/complete RPC | 구현 완료 |
+| AI 요청 파이프라인 | `workflow_new_record_alert.json` | 웹훅→WAIT_FOR_SYNC→알림+WAIT병렬→완료 | v1.1 |
+| HMN 결정 Resume | `workflow_hmn_decision_alert.json` | 웹훅→WAIT_FOR_SYNC 해제→결정 알림 | v1.1 |
+| Supabase 트리거+RPC | `07_SUPABASE/migration_v1.6.2_webhooks.sql` | 트리거+ensure/complete RPC | v1.1 |
 
 **핵심:** WAIT_FOR_SYNC 상태가 N8N 워크플로우의 중심. 모든 레코드는 WAIT_FOR_SYNC를 거쳐야 HMN 결정 가능.
 
-```
-[새 레코드] → WAIT_FOR_SYNC 확인 → 3채널 알림 → HMN 대기(Wait) → 결정 수신 → 완료
-[HMN 결정] → WAIT_FOR_SYNC 해제 → 3채널 결과 알림
-```
+**v1.1 수정 (CSR 감사):** 알림 3채널 실패해도 WAIT_FOR_SYNC는 반드시 진입. 부분 성공 + WAIT 진행.
 
-알림 채널: **카카오톡 + Discord + 이메일** (3채널 동시 발송)
+알림 채널: **카카오톡 + Discord + 이메일** (3채널 동시 발송, fire-and-forget)
 
 설정 방법: [SETUP_GUIDE.md](./SETUP_GUIDE.md) 참고
 
 ---
 
-## 워크플로우 1 — AI 의견 수집 → HMN 알림
+## 전체 구조도
 
 ```
-[트리거] GitHub Issue 생성
-    ↓
-[N8N] Issue 내용 파싱
-    - title, body, labels 추출
-    - LEVEL 자동 판단 (label 기반)
-    ↓
-[N8N] Record ID 생성
-    - SEJONG-{AI_CODE}-{YYYYMMDD}-{HHMMSS}-{SEQ}
-    ↓
-[Supabase] records 테이블 INSERT
-    - status = 'WAIT_FOR_SYNC'
-    ↓
-[N8N] AI 의견 수집 (HTTP Request)
-    - GPT API 호출
-    - GRK API 호출
-    - CLD API 호출
-    (LEVEL에 따라 AI 수 조정)
-    ↓
-[Supabase] ai_opinions 테이블 INSERT
-    ↓
-[카카오톡 or 슬랙] HMN에 알림 전송
-    - 제목, LEVEL, AI 의견 요약
-    - 승인 페이지 링크 포함
-    - https://your-app.vercel.app/approve?id={record_id}
-    ↓
-[대기] WAIT_FOR_SYNC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 세종 OS N8N 워크플로우 전체 아키텍처 (v1.1)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[AI/시스템]          [Supabase]              [N8N]                    [HMN]
+    │                    │                     │                       │
+    │ records INSERT     │                     │                       │
+    ├───────────────────►│                     │                       │
+    │                    │ pg_net trigger       │                       │
+    │                    ├────────────────────►│                       │
+    │                    │                     │ 1. 웹훅 수신            │
+    │                    │                     │     │                  │
+    │                    │◄── RPC call ────────│ 2. WAIT_FOR_SYNC 확인  │
+    │                    │ ensure_wait_for_sync │     │                  │
+    │                    │                     │ 3. 메시지 포맷          │
+    │                    │                     │     │                  │
+    │                    │                     │     ├── 4a. Discord ───►│ (알림)
+    │                    │                     │     ├── 4b. 카카오톡 ──►│ (알림)
+    │                    │                     │     ├── 4c. 이메일 ────►│ (알림)
+    │                    │                     │     │  (fire-and-forget │
+    │                    │                     │     │   실패해도 계속)    │
+    │                    │                     │     │                  │
+    │                    │                     │ 5. HMN 응답 대기 ◄─────│
+    │                    │                     │     (Wait 노드)        │
+    │                    │                     │     │                  │
+    │                    │                     │     │    (HMN 결정)     │
+    │                    │                     │     │◄─────────────────│
+    │                    │                     │     │                  │
+    │                    │◄── PATCH ───────────│ 6. Supabase 업데이트   │
+    │                    │ status=APPROVED/etc  │     │                  │
+    │                    │                     │ 7. 결과 포맷            │
+    │                    │                     │     │                  │
+    │                    │                     │     ├── 8a. Discord ───►│ (결과)
+    │                    │                     │     ├── 8b. 카카오톡 ──►│ (결과)
+    │                    │                     │     └── 8c. 이메일 ────►│ (결과)
+    │                    │                     │                       │
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[HMN 결정 Resume 워크플로우]
+    │                    │                     │                       │
+    │                    │ hmn_decisions INSERT │                       │
+    │                    ├────────────────────►│                       │
+    │                    │                     │ 1. HMN 결정 웹훅       │
+    │                    │◄── RPC call ────────│ 2. WAIT_FOR_SYNC 해제  │
+    │                    │ complete_wait_for_sync│    │                  │
+    │                    │                     │ 3. 결과 포맷            │
+    │                    │                     │     │                  │
+    │                    │                     │     ├── Discord  ─────►│
+    │                    │                     │     ├── 카카오톡 ──────►│
+    │                    │                     │     └── 이메일  ───────►│
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### 핵심 원칙
+
+```
+절대 원칙: WAIT_FOR_SYNC는 알림 성공 여부와 무관하게 반드시 진입
+          → 알림은 "부분 성공" 허용 (fire-and-forget)
+          → Wait 노드는 항상 활성화
+          → HMN 결정 없이는 진행 불가 (무한 대기)
 ```
 
 ---
 
-## 워크플로우 2 — HMN 승인 → 자동 배포
+## 워크플로우 1 — AI 요청 파이프라인 (구현 완료)
 
 ```
-[트리거] Vercel 승인 페이지 Webhook
-    - POST /api/decide
-    - body: { record_id, decision, memo }
+[Supabase] records INSERT → pg_net → N8N 웹훅
     ↓
-[N8N] decision 분기
-    ├── APPROVED → 다음 단계
-    ├── REJECTED → GitHub Issue에 반려 코멘트 → 종료
-    └── HOLD     → Supabase status = 'HOLD' → 종료
+[N8N] 1. 웹훅 수신
     ↓
-[Supabase] records 업데이트
-    - status = 'APPROVED'
-    - decided_at = NOW()
-    - hmn_memo = memo
+[N8N] 2. WAIT_FOR_SYNC 확인 (Supabase RPC: ensure_wait_for_sync)
     ↓
-[Supabase] hmn_decisions INSERT
+[N8N] 3. 메시지 포맷 (Discord embed, 카카오, 이메일 HTML)
+    ↓ (4개 병렬 — 알림 실패해도 WAIT 진입 보장)
+    ├── 4a. Discord 알림 (continueOnFail)
+    ├── 4b. 카카오톡 알림 (continueOnFail)
+    ├── 4c. 이메일 알림 (continueOnFail)
+    └── 5. HMN 응답 대기 (Wait 노드 — 알림과 독립적으로 진입)
+              ↓ (HMN 결정 수신 시 resume)
+         6. Supabase 업데이트 (PATCH records)
+              ↓
+         7. 결과 포맷
+              ↓
+         8a/8b/8c. 3채널 결과 알림
+```
+
+---
+
+## 워크플로우 2 — HMN 결정 Resume (구현 완료)
+
+```
+[Supabase] hmn_decisions INSERT → pg_net → N8N 웹훅
+    ↓
+[N8N] 1. HMN 결정 웹훅 수신
+    ↓
+[N8N] 2. WAIT_FOR_SYNC 해제 (Supabase RPC: complete_wait_for_sync)
+    ↓
+[N8N] 3. 결과 포맷
+    ↓
+[N8N] 4a/4b/4c. 3채널 결과 알림
+```
+
+---
+
+## 워크플로우 3 — 미래 확장 (미구현)
+
+```
+[트리거] GitHub Issue 생성
+    ↓
+[N8N] Issue 파싱 + Record ID 생성
+    ↓
+[Supabase] records INSERT (→ 워크플로우 1 자동 발동)
+    ↓
+[N8N] AI 의견 수집 (GPT/GRK/CLD API)
+    ↓
+[Supabase] ai_opinions INSERT
+    ↓
+[대기] 워크플로우 1의 WAIT_FOR_SYNC에서 처리
+
+[트리거] HMN 승인 확인 후
     ↓
 [GitHub] PR auto-merge (LEVEL 4~5만)
     또는
 [알림] LEVEL 1~3은 수동 merge 안내
-    ↓
-[완료] Record 이력 확정
 ```
 
 ---
