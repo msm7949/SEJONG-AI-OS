@@ -4,8 +4,9 @@ export default function Header() {
   const location = useLocation();
 
   const navItems = [
-    { to: '/', label: '대시보드' },
+    { to: '/', label: 'AI 대화' },
     { to: '/approve', label: 'HMN 승인' },
+    { to: '/dashboard', label: '대시보드' },
   ];
 
   return (

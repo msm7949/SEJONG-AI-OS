@@ -70,6 +70,22 @@ export default function RecordCard({ record, opinions, onDecide, deciding }: Rec
             <span className="font-semibold">HMN 메모:</span> {record.hmn_memo}
           </div>
         )}
+
+        {record.status === 'APPROVED' && (record.result || record.executed_at) && (
+          <div className="mt-3 p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-900">
+            <p className="font-semibold">실행 결과</p>
+            {record.result ? (
+              <p className="mt-1 whitespace-pre-wrap">{record.result}</p>
+            ) : (
+              <p className="mt-1 text-emerald-700">결과 생성 대기 중</p>
+            )}
+            {record.executed_at && (
+              <p className="mt-2 text-xs text-emerald-700">
+                executed_at: {formatDate(record.executed_at)}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* AI Opinions */}

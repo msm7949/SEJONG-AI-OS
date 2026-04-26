@@ -93,30 +93,34 @@ export function useRecords(): UseRecordsReturn {
 
   const decide = useCallback(
     async (recordId: string, decision: Decision, memo: string) => {
-      if (source === 'supabase' && supabase) {
-        const { data, error: rpcError } = await supabase.rpc('make_hmn_decision', {
-          p_record_id: recordId,
-          p_decision: decision,
-          p_memo: memo || null,
-        });
+      setError(null);
+      try {
+        if (source === 'supabase' && supabase) {
+          const { data, error: rpcError } = await supabase.rpc('make_hmn_decision', {
+            p_record_id: recordId,
+            p_decision: decision,
+            p_memo: memo || null,
+          });
 
-        if (rpcError) {
-          setError(`결정 실패: ${rpcError.message}`);
+          if (rpcError) {
+            setError(`결정 실패: ${rpcError.message}`);
+            return;
+          }
+
+          const result = data as { success: boolean; error?: string };
+          if (!result.success) {
+            setError(`결정 실패: ${result.error}`);
+            return;
+          }
+
+          const freshData = await fetchSupabaseData();
+          if (freshData) {
+            setRecords(freshData.records);
+            setOpinions(freshData.opinions);
+          }
           return;
         }
 
-        const result = data as { success: boolean; error?: string };
-        if (!result.success) {
-          setError(`결정 실패: ${result.error}`);
-          return;
-        }
-
-        const freshData = await fetchSupabaseData();
-        if (freshData) {
-          setRecords(freshData.records);
-          setOpinions(freshData.opinions);
-        }
-      } else {
         setRecords((prev) =>
           prev.map((r) =>
             r.record_id === recordId
@@ -129,6 +133,9 @@ export function useRecords(): UseRecordsReturn {
               : r
           )
         );
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : '알 수 없는 에러';
+        setError(`결정 처리 중 예외 발생: ${message}`);
       }
     },
     [source]

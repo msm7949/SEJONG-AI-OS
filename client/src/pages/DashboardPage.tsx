@@ -1,17 +1,44 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useRecords } from '../hooks/useRecords';
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const { records, opinions, loading, source } = useRecords();
 
   const pending = records.filter((r) => r.status === 'WAIT_FOR_SYNC').length;
   const approved = records.filter((r) => r.status === 'APPROVED').length;
   const rejected = records.filter((r) => r.status === 'REJECTED').length;
+  const hold = records.filter((r) => r.status === 'HOLD').length;
 
   const stats = [
-    { label: '대기 중', value: pending, color: 'bg-amber-500', textColor: 'text-amber-600' },
-    { label: '승인', value: approved, color: 'bg-green-500', textColor: 'text-green-600' },
-    { label: '반려', value: rejected, color: 'bg-red-500', textColor: 'text-red-600' },
+    {
+      label: '대기 중',
+      value: pending,
+      color: 'bg-amber-500',
+      textColor: 'text-amber-600',
+      to: '/approve?status=WAIT_FOR_SYNC',
+    },
+    {
+      label: '승인',
+      value: approved,
+      color: 'bg-green-500',
+      textColor: 'text-green-600',
+      to: '/approve?status=APPROVED',
+    },
+    {
+      label: '반려',
+      value: rejected,
+      color: 'bg-red-500',
+      textColor: 'text-red-600',
+      to: '/approve?status=REJECTED',
+    },
+    {
+      label: '보류',
+      value: hold,
+      color: 'bg-slate-500',
+      textColor: 'text-slate-600',
+      to: '/approve?status=HOLD',
+    },
     { label: 'AI 의견', value: opinions.length, color: 'bg-indigo-500', textColor: 'text-indigo-600' },
   ];
 
@@ -31,14 +58,28 @@ export default function DashboardPage() {
           <p className="mt-2 text-sm text-slate-400">데이터 로딩 중...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
-          {stats.map((stat) => (
-            <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
-              <div className={`w-2 h-2 rounded-full ${stat.color} mb-3`} />
-              <p className={`text-2xl sm:text-3xl font-bold ${stat.textColor}`}>{stat.value}</p>
-              <p className="text-xs text-slate-500 mt-1">{stat.label}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
+          {stats.map((stat) =>
+            stat.to ? (
+              <button
+                key={stat.label}
+                type="button"
+                onClick={() => navigate(stat.to!)}
+                className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 text-left hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              >
+                <div className={`w-2 h-2 rounded-full ${stat.color} mb-3`} />
+                <p className={`text-2xl sm:text-3xl font-bold ${stat.textColor}`}>{stat.value}</p>
+                <p className="text-xs text-slate-500 mt-1">{stat.label}</p>
+                <p className="text-[11px] text-indigo-600 mt-2 font-medium">클릭해서 목록 보기</p>
+              </button>
+            ) : (
+              <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
+                <div className={`w-2 h-2 rounded-full ${stat.color} mb-3`} />
+                <p className={`text-2xl sm:text-3xl font-bold ${stat.textColor}`}>{stat.value}</p>
+                <p className="text-xs text-slate-500 mt-1">{stat.label}</p>
+              </div>
+            )
+          )}
         </div>
       )}
 

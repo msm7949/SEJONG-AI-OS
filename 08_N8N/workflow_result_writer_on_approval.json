@@ -1,0 +1,195 @@
+{
+  "name": "세종 OS — WF4 승인 결과 저장",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sejong-save-result",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "1. 결과 저장 웹훅 수신",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 280]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "only-approved",
+              "leftValue": "={{ $json.body.status }}",
+              "rightValue": "APPROVED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-approved",
+      "name": "2. APPROVED 여부 확인",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [470, 280]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "record_id",
+              "value": "={{ $json.body.record_id }}",
+              "type": "string"
+            },
+            {
+              "name": "result_text",
+              "value": "={{ '실행 결과 요약\\n- 제목: ' + ($json.body.title || '') + '\\n- 결정: APPROVED\\n- HMN 메모: ' + ($json.body.memo || 'NONE') + '\\n- 처리시각(KST): ' + (new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).replace(' ', 'T') + '+09:00') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-result",
+      "name": "3. 결과 텍스트 생성",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [700, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/save_execution_result",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"p_record_id\":\"{{ $json.record_id }}\",\"p_result\":{{ JSON.stringify($json.result_text) }},\"p_executed_at\":\"{{ new Date().toISOString() }}\"}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rpc-save-result",
+      "name": "4. Supabase 결과 저장 RPC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [940, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\":true,\"record_id\":\"{{ $('3. 결과 텍스트 생성').item.json.record_id }}\",\"message\":\"result_saved\"}",
+        "options": {}
+      },
+      "id": "respond-ok",
+      "name": "5a. 성공 응답",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1170, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\":false,\"message\":\"status_not_approved\"}",
+        "options": {}
+      },
+      "id": "respond-skip",
+      "name": "5b. 스킵 응답",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [700, 360]
+    }
+  ],
+  "connections": {
+    "1. 결과 저장 웹훅 수신": {
+      "main": [
+        [
+          {
+            "node": "2. APPROVED 여부 확인",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. APPROVED 여부 확인": {
+      "main": [
+        [
+          {
+            "node": "3. 결과 텍스트 생성",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "5b. 스킵 응답",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. 결과 텍스트 생성": {
+      "main": [
+        [
+          {
+            "node": "4. Supabase 결과 저장 RPC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Supabase 결과 저장 RPC": {
+      "main": [
+        [
+          {
+            "node": "5a. 성공 응답",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "세종OS"
+    },
+    {
+      "name": "WF4"
+    },
+    {
+      "name": "RESULT"
+    }
+  ]
+}

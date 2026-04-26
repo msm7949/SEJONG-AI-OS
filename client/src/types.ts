@@ -16,6 +16,8 @@ export interface SejongRecord {
   hmn_memo: string | null;
   created_at: string;
   decided_at: string | null;
+  result?: string | null;
+  executed_at?: string | null;
   metadata: object;
 }
 

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { Decision } from '../types';
 import { useRecords } from '../hooks/useRecords';
 import RecordCard from '../components/RecordCard';
@@ -7,21 +8,70 @@ type FilterTab = 'pending' | 'all' | 'decided';
 
 export default function ApprovePage() {
   const { records, opinions, loading, error, source, decide, refresh } = useRecords();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<FilterTab>('pending');
   const [deciding, setDeciding] = useState(false);
+  const statusFilter = searchParams.get('status');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') ?? '');
+
+  useEffect(() => {
+    const q = searchParams.get('q') ?? '';
+    setSearchTerm(q);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (statusFilter === 'WAIT_FOR_SYNC') {
+      setActiveTab('pending');
+    } else if (statusFilter === 'APPROVED' || statusFilter === 'REJECTED' || statusFilter === 'HOLD') {
+      setActiveTab('decided');
+    }
+  }, [statusFilter]);
 
   const filteredRecords = useMemo(() => {
+    let base = records;
     switch (activeTab) {
       case 'pending':
-        return records.filter((r) => r.status === 'WAIT_FOR_SYNC');
+        base = records.filter((r) => r.status === 'WAIT_FOR_SYNC');
+        break;
       case 'decided':
-        return records.filter((r) => r.status !== 'WAIT_FOR_SYNC');
+        base = records.filter((r) => r.status !== 'WAIT_FOR_SYNC');
+        break;
       default:
-        return records;
+        base = records;
+        break;
     }
-  }, [records, activeTab]);
+
+    if (statusFilter === 'WAIT_FOR_SYNC') {
+      base = base.filter((r) => r.status === 'WAIT_FOR_SYNC');
+    }
+    if (statusFilter === 'APPROVED' || statusFilter === 'REJECTED' || statusFilter === 'HOLD') {
+      base = base.filter((r) => r.status === statusFilter);
+    }
+
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return base;
+
+    return base.filter((r) =>
+      [
+        r.record_id,
+        r.title,
+        r.content,
+        r.hmn_memo ?? '',
+        r.result ?? '',
+        r.ai_code,
+        r.mode,
+        r.status,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword)
+    );
+  }, [records, activeTab, statusFilter, searchTerm]);
 
   const pendingCount = records.filter((r) => r.status === 'WAIT_FOR_SYNC').length;
+  const approvedCount = records.filter((r) => r.status === 'APPROVED').length;
+  const rejectedCount = records.filter((r) => r.status === 'REJECTED').length;
+  const holdCount = records.filter((r) => r.status === 'HOLD').length;
   const pendingRecords = records.filter((r) => r.status === 'WAIT_FOR_SYNC');
   const levelSummary = {
     l1: pendingRecords.filter((r) => r.level === 1).length,
@@ -33,8 +83,11 @@ export default function ApprovePage() {
 
   const handleDecide = async (recordId: string, decision: Decision, memo: string) => {
     setDeciding(true);
-    await decide(recordId, decision, memo);
-    setDeciding(false);
+    try {
+      await decide(recordId, decision, memo);
+    } finally {
+      setDeciding(false);
+    }
   };
 
   const tabs: { key: FilterTab; label: string }[] = [
@@ -42,6 +95,35 @@ export default function ApprovePage() {
     { key: 'all', label: '전체' },
     { key: 'decided', label: '결정 완료' },
   ];
+
+  const statusButtons: Array<{ label: string; value: string | null }> = [
+    { label: '상태 전체', value: null },
+    { label: '대기', value: 'WAIT_FOR_SYNC' },
+    { label: '승인', value: 'APPROVED' },
+    { label: '반려', value: 'REJECTED' },
+    { label: '보류', value: 'HOLD' },
+  ];
+
+  const applyStatusFilter = (next: string | null) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (next) {
+      nextParams.set('status', next);
+    } else {
+      nextParams.delete('status');
+    }
+    setSearchParams(nextParams);
+  };
+
+  const updateSearch = (value: string) => {
+    setSearchTerm(value);
+    const nextParams = new URLSearchParams(searchParams);
+    if (value.trim()) {
+      nextParams.set('q', value);
+    } else {
+      nextParams.delete('q');
+    }
+    setSearchParams(nextParams);
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -136,6 +218,80 @@ export default function ApprovePage() {
           </button>
         ))}
       </div>
+
+      {/* Search + Status Filter */}
+      <div className="mb-6 space-y-3">
+        <input
+          value={searchTerm}
+          onChange={(e) => updateSearch(e.target.value)}
+          placeholder="record_id, 제목, 내용, HMN 메모, 실행 결과 검색"
+          className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+        />
+        <div className="flex flex-wrap gap-2">
+          {statusButtons.map((b) => {
+            const selected = (statusFilter ?? null) === b.value;
+            return (
+              <button
+                key={b.label}
+                type="button"
+                onClick={() => applyStatusFilter(b.value)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  selected
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                }`}
+              >
+                {b.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Decided View Helper */}
+      {activeTab === 'decided' && (
+        <div className="mb-6 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+          <div className="flex flex-wrap items-center gap-2 text-xs mb-2">
+            <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+              승인 {approvedCount}
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium">
+              반려 {rejectedCount}
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-medium">
+              보류 {holdCount}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => applyStatusFilter(null)}
+              className="px-3 py-1.5 rounded-md text-xs font-medium border border-slate-300 bg-white hover:bg-slate-100"
+            >
+              결정 전체 보기
+            </button>
+            <button
+              type="button"
+              onClick={() => applyStatusFilter('APPROVED')}
+              className="px-3 py-1.5 rounded-md text-xs font-medium border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+            >
+              승인만 보기
+            </button>
+            <button
+              type="button"
+              onClick={() => applyStatusFilter('REJECTED')}
+              className="px-3 py-1.5 rounded-md text-xs font-medium border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+            >
+              반려만 보기
+            </button>
+          </div>
+          {(statusFilter === 'APPROVED' || statusFilter === 'REJECTED' || statusFilter === 'HOLD') && (
+            <p className="mt-2 text-xs text-slate-500">
+              현재 상태 필터 적용 중: <span className="font-semibold">{statusFilter}</span>
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Loading */}
       {loading ? (

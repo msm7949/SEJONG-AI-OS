@@ -1,0 +1,40 @@
+{
+  "redirects": [
+    {
+      "source": "/approve",
+      "destination": "/#/approve",
+      "permanent": false
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/#/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/client/approve",
+      "destination": "/#/approve",
+      "permanent": false
+    },
+    {
+      "source": "/client/dashboard",
+      "destination": "/#/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/client",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/client/(.*)",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
