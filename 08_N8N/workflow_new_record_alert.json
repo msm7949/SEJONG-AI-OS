@@ -1,5 +1,5 @@
 {
-  "name": "세종 OS — AI 요청 파이프라인 (WAIT_FOR_SYNC)",
+  "name": "세종 OS — AI 요청 파이프라인 (레벨 분기형)",
   "nodes": [
     {
       "parameters": {
@@ -11,7 +11,37 @@
       "name": "1. 웹훅 수신",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [250, 300]
+      "position": [240, 280]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "level-check",
+              "leftValue": "={{ Number($json.body.level) }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-level",
+      "name": "2. LEVEL 분기 (L1~L3 vs L4~L5)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [470, 280]
     },
     {
       "parameters": {
@@ -19,7 +49,7 @@
         "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/ensure_wait_for_sync",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={ \"p_record_id\": \"{{ $json.body.record_id }}\" }",
+        "jsonBody": "={\"p_record_id\":\"{{ $('1. 웹훅 수신').item.json.body.record_id }}\"}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -30,56 +60,11 @@
         },
         "options": {}
       },
-      "id": "supabase-wait-sync",
-      "name": "2. WAIT_FOR_SYNC 확인",
+      "id": "ensure-wait",
+      "name": "3a. WAIT_FOR_SYNC 설정 (L1~L3)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [470, 300],
-      "notes": "Supabase RPC로 status = WAIT_FOR_SYNC 확인. 이미 WAIT_FOR_SYNC면 그대로 진행."
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "record_id",
-              "name": "record_id",
-              "value": "={{ $('1. 웹훅 수신').item.json.body.record_id }}",
-              "type": "string"
-            },
-            {
-              "id": "discord_message",
-              "name": "discord_message",
-              "value": "={{ $('1. 웹훅 수신').item.json.body.level_label }} {{ {1: '🔴', 2: '🟠', 3: '🟡', 4: '🔵', 5: '⚪'}[$('1. 웹훅 수신').item.json.body.level] || '⚪' }}\n\n**{{ $('1. 웹훅 수신').item.json.body.title }}**\n\n> {{ $('1. 웹훅 수신').item.json.body.content }}\n\n📋 `{{ $('1. 웹훅 수신').item.json.body.record_id }}`\n🤖 AI: {{ $('1. 웹훅 수신').item.json.body.ai_code }} | 모드: {{ $('1. 웹훅 수신').item.json.body.mode }}\n⏳ 상태: **WAIT_FOR_SYNC** — HMN 결정 대기 중\n🔗 [승인 페이지 열기]({{ $('1. 웹훅 수신').item.json.body.approve_url }})",
-              "type": "string"
-            },
-            {
-              "id": "email_subject",
-              "name": "email_subject",
-              "value": "=[세종 OS] ⏳ WAIT_FOR_SYNC: {{ $('1. 웹훅 수신').item.json.body.level_label }} — {{ $('1. 웹훅 수신').item.json.body.title }}",
-              "type": "string"
-            },
-            {
-              "id": "email_body",
-              "name": "email_body",
-              "value": "=<h2>⏳ WAIT_FOR_SYNC — HMN 결정 대기</h2><h3>{{ $('1. 웹훅 수신').item.json.body.level_label }} — {{ $('1. 웹훅 수신').item.json.body.title }}</h3><p>{{ $('1. 웹훅 수신').item.json.body.content }}</p><hr><ul><li>Record ID: {{ $('1. 웹훅 수신').item.json.body.record_id }}</li><li>AI: {{ $('1. 웹훅 수신').item.json.body.ai_code }}</li><li>모드: {{ $('1. 웹훅 수신').item.json.body.mode }}</li><li>상태: <strong>WAIT_FOR_SYNC</strong></li></ul><p><a href=\"{{ $('1. 웹훅 수신').item.json.body.approve_url }}\" style=\"background:#4F46E5;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;\">승인 페이지 열기</a></p>",
-              "type": "string"
-            },
-            {
-              "id": "kakao_message",
-              "name": "kakao_message",
-              "value": "=[세종 OS] ⏳ WAIT_FOR_SYNC\n{{ $('1. 웹훅 수신').item.json.body.level_label }}\n{{ $('1. 웹훅 수신').item.json.body.title }}\nAI: {{ $('1. 웹훅 수신').item.json.body.ai_code }} | {{ $('1. 웹훅 수신').item.json.body.mode }}\nHMN 결정 필요!\n승인: {{ $('1. 웹훅 수신').item.json.body.approve_url }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "format-message",
-      "name": "3. 메시지 포맷",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [690, 300]
+      "position": [700, 140]
     },
     {
       "parameters": {
@@ -87,145 +72,50 @@
         "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"⏳ WAIT_FOR_SYNC — HMN 결정 대기\",\n    \"description\": {{ JSON.stringify($json.discord_message) }},\n    \"color\": {{ {1: 15548997, 2: 16744192, 3: 16776960, 4: 3447003, 5: 9807270}[$('1. 웹훅 수신').item.json.body.level] || 9807270 }},\n    \"footer\": { \"text\": \"세종 OS v1.6 — 절대 원칙: 모든 결정은 HMN이 한다\" },\n    \"timestamp\": \"{{ $('1. 웹훅 수신').item.json.body.created_at }}\"\n  }]\n}",
+        "jsonBody": "={\"embeds\":[{\"title\":\"⏳ HMN 승인 대기\",\"description\":\"Record: {{ $('1. 웹훅 수신').item.json.body.record_id }}\\nLevel: {{ $('1. 웹훅 수신').item.json.body.level_label }}\\n제목: {{ $('1. 웹훅 수신').item.json.body.title }}\\n상태: WAIT_FOR_SYNC\\n승인: {{ $('1. 웹훅 수신').item.json.body.approve_url }}\",\"color\":16744192}]}",
         "options": {}
       },
-      "id": "discord-notify",
-      "name": "4a. Discord 알림",
+      "id": "notify-hmn",
+      "name": "4a. HMN 대기 알림",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [920, 100],
-      "continueOnFail": true,
-      "notes": "실패해도 WAIT_FOR_SYNC 진입에 영향 없음 (fire-and-forget)"
+      "position": [930, 140],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\":true,\"path\":\"HMN\",\"record_id\":\"{{ $('1. 웹훅 수신').item.json.body.record_id }}\",\"status\":\"WAIT_FOR_SYNC\"}",
+        "options": {}
+      },
+      "id": "respond-hmn",
+      "name": "5a. 응답(HMN 경로)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1160, 140]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.KAKAO_WEBHOOK_URL }}",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/complete_wait_for_sync",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"object_type\": \"text\",\n  \"text\": {{ JSON.stringify($json.kakao_message) }},\n  \"link\": {\n    \"web_url\": \"{{ $('1. 웹훅 수신').item.json.body.approve_url }}\",\n    \"mobile_web_url\": \"{{ $('1. 웹훅 수신').item.json.body.approve_url }}\"\n  },\n  \"button_title\": \"승인 페이지 열기\"\n}",
-        "options": {}
-      },
-      "id": "kakao-notify",
-      "name": "4b. 카카오톡 알림",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [920, 200],
-      "continueOnFail": true,
-      "notes": "실패해도 WAIT_FOR_SYNC 진입에 영향 없음 (fire-and-forget)"
-    },
-    {
-      "parameters": {
-        "fromEmail": "={{ $env.SMTP_FROM_EMAIL }}",
-        "toEmail": "={{ $env.NOTIFICATION_EMAIL }}",
-        "subject": "={{ $json.email_subject }}",
-        "emailType": "html",
-        "html": "={{ $json.email_body }}",
-        "options": {}
-      },
-      "id": "email-notify",
-      "name": "4c. 이메일 알림",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [920, 300],
-      "continueOnFail": true,
-      "notes": "실패해도 WAIT_FOR_SYNC 진입에 영향 없음 (fire-and-forget)",
-      "credentials": {
-        "smtp": {
-          "id": "SMTP_CREDENTIAL_ID",
-          "name": "SMTP 설정"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "resume": "webhook",
-        "options": {
-          "webhookSuffix": "=/sejong-resume/{{ $('1. 웹훅 수신').item.json.body.record_id }}"
-        }
-      },
-      "id": "wait-hmn",
-      "name": "5. HMN 응답 대기",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [1150, 300],
-      "notes": "WAIT_FOR_SYNC — HMN이 승인 페이지에서 결정할 때까지 대기. hmn_decisions INSERT 트리거가 이 웹훅을 resume 호출."
-    },
-    {
-      "parameters": {
-        "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/records?record_id=eq.{{ $('1. 웹훅 수신').item.json.body.record_id }}",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"status\": \"{{ $json.body.decision }}\",\n  \"hmn_memo\": {{ JSON.stringify($json.body.memo || '') }},\n  \"decided_at\": \"{{ $json.body.decided_at || new Date().toISOString() }}\"\n}",
+        "jsonBody": "={\"p_record_id\":\"{{ $('1. 웹훅 수신').item.json.body.record_id }}\",\"p_decision\":\"APPROVED\",\"p_memo\":\"AUTO_APPROVED_L4_L5\"}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
             { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Prefer", "value": "return=minimal" }
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "options": {}
       },
-      "id": "supabase-update",
-      "name": "6. 승인 확인 — Supabase 업데이트",
+      "id": "auto-approve",
+      "name": "3b. 자동 승인 처리 (L4~L5)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1370, 300],
-      "notes": "HMN 결정 후 records 테이블 상태 업데이트 (APPROVED/REJECTED/HOLD)"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "decision_emoji",
-              "name": "decision_emoji",
-              "value": "={{ {'APPROVED': '✅', 'REJECTED': '❌', 'HOLD': '⏸️'}[$('5. HMN 응답 대기').item.json.body.decision] || '❓' }}",
-              "type": "string"
-            },
-            {
-              "id": "decision_label",
-              "name": "decision_label",
-              "value": "={{ {'APPROVED': '승인', 'REJECTED': '반려', 'HOLD': '보류'}[$('5. HMN 응답 대기').item.json.body.decision] || '알 수 없음' }}",
-              "type": "string"
-            },
-            {
-              "id": "result_discord",
-              "name": "result_discord",
-              "value": "={{ {'APPROVED': '✅', 'REJECTED': '❌', 'HOLD': '⏸️'}[$('5. HMN 응답 대기').item.json.body.decision] || '❓' }} **{{ {'APPROVED': '승인', 'REJECTED': '반려', 'HOLD': '보류'}[$('5. HMN 응답 대기').item.json.body.decision] }}**\n\n**{{ $('1. 웹훅 수신').item.json.body.title }}**\n{{ $('5. HMN 응답 대기').item.json.body.memo ? '💬 HMN 메모: ' + $('5. HMN 응답 대기').item.json.body.memo : '' }}\n\n📋 `{{ $('1. 웹훅 수신').item.json.body.record_id }}`",
-              "type": "string"
-            },
-            {
-              "id": "result_kakao",
-              "name": "result_kakao",
-              "value": "=[세종 OS 결정 완료]\n{{ {'APPROVED': '✅ 승인', 'REJECTED': '❌ 반려', 'HOLD': '⏸️ 보류'}[$('5. HMN 응답 대기').item.json.body.decision] }}\n{{ $('1. 웹훅 수신').item.json.body.title }}\n{{ $('5. HMN 응답 대기').item.json.body.memo ? 'HMN 메모: ' + $('5. HMN 응답 대기').item.json.body.memo : '' }}",
-              "type": "string"
-            },
-            {
-              "id": "result_email_subject",
-              "name": "result_email_subject",
-              "value": "=[세종 OS] {{ {'APPROVED': '✅ 승인', 'REJECTED': '❌ 반려', 'HOLD': '⏸️ 보류'}[$('5. HMN 응답 대기').item.json.body.decision] }} — {{ $('1. 웹훅 수신').item.json.body.title }}",
-              "type": "string"
-            },
-            {
-              "id": "result_email_body",
-              "name": "result_email_body",
-              "value": "=<h2>{{ {'APPROVED': '✅', 'REJECTED': '❌', 'HOLD': '⏸️'}[$('5. HMN 응답 대기').item.json.body.decision] }} HMN 결정: {{ {'APPROVED': '승인', 'REJECTED': '반려', 'HOLD': '보류'}[$('5. HMN 응답 대기').item.json.body.decision] }}</h2><h3>{{ $('1. 웹훅 수신').item.json.body.title }}</h3><hr><ul><li>Record ID: {{ $('1. 웹훅 수신').item.json.body.record_id }}</li><li>결정: <strong>{{ {'APPROVED': '승인', 'REJECTED': '반려', 'HOLD': '보류'}[$('5. HMN 응답 대기').item.json.body.decision] }}</strong></li>{{ $('5. HMN 응답 대기').item.json.body.memo ? '<li>HMN 메모: ' + $('5. HMN 응답 대기').item.json.body.memo + '</li>' : '' }}</ul>",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "format-result",
-      "name": "7. 결정 결과 포맷",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [1590, 300]
+      "position": [700, 420]
     },
     {
       "parameters": {
@@ -233,91 +123,50 @@
         "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"🏛️ HMN 결정 완료\",\n    \"description\": {{ JSON.stringify($json.result_discord) }},\n    \"color\": {{ {'APPROVED': 5763719, 'REJECTED': 15548997, 'HOLD': 16776960}[$('5. HMN 응답 대기').item.json.body.decision] || 9807270 }},\n    \"footer\": { \"text\": \"세종 OS v1.6 — WAIT_FOR_SYNC 완료\" }\n  }]\n}",
+        "jsonBody": "={\"embeds\":[{\"title\":\"✅ 자동 처리 완료\",\"description\":\"Record: {{ $('1. 웹훅 수신').item.json.body.record_id }}\\nLevel: {{ $('1. 웹훅 수신').item.json.body.level_label }}\\n제목: {{ $('1. 웹훅 수신').item.json.body.title }}\\n결정: APPROVED (AUTO)\",\"color\":5763719}]}",
         "options": {}
       },
-      "id": "discord-result",
-      "name": "8a. Discord 결과",
+      "id": "notify-auto",
+      "name": "4b. 자동처리 알림",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1810, 160]
+      "position": [930, 420],
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $env.KAKAO_WEBHOOK_URL }}",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"object_type\": \"text\",\n  \"text\": {{ JSON.stringify($json.result_kakao) }},\n  \"link\": {\n    \"web_url\": \"{{ $('1. 웹훅 수신').item.json.body.approve_url }}\",\n    \"mobile_web_url\": \"{{ $('1. 웹훅 수신').item.json.body.approve_url }}\"\n  },\n  \"button_title\": \"확인\"\n}",
+        "respondWith": "json",
+        "responseBody": "={\"success\":true,\"path\":\"AUTO\",\"record_id\":\"{{ $('1. 웹훅 수신').item.json.body.record_id }}\",\"status\":\"APPROVED\"}",
         "options": {}
       },
-      "id": "kakao-result",
-      "name": "8b. 카카오톡 결과",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1810, 300]
-    },
-    {
-      "parameters": {
-        "fromEmail": "={{ $env.SMTP_FROM_EMAIL }}",
-        "toEmail": "={{ $env.NOTIFICATION_EMAIL }}",
-        "subject": "={{ $json.result_email_subject }}",
-        "emailType": "html",
-        "html": "={{ $json.result_email_body }}",
-        "options": {}
-      },
-      "id": "email-result",
-      "name": "8c. 이메일 결과",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [1810, 440],
-      "credentials": {
-        "smtp": {
-          "id": "SMTP_CREDENTIAL_ID",
-          "name": "SMTP 설정"
-        }
-      }
+      "id": "respond-auto",
+      "name": "5b. 응답(자동 경로)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1160, 420]
     }
   ],
   "connections": {
     "1. 웹훅 수신": {
+      "main": [[{ "node": "2. LEVEL 분기 (L1~L3 vs L4~L5)", "type": "main", "index": 0 }]]
+    },
+    "2. LEVEL 분기 (L1~L3 vs L4~L5)": {
       "main": [
-        [{ "node": "2. WAIT_FOR_SYNC 확인", "type": "main", "index": 0 }]
+        [{ "node": "3a. WAIT_FOR_SYNC 설정 (L1~L3)", "type": "main", "index": 0 }],
+        [{ "node": "3b. 자동 승인 처리 (L4~L5)", "type": "main", "index": 0 }]
       ]
     },
-    "2. WAIT_FOR_SYNC 확인": {
-      "main": [
-        [{ "node": "3. 메시지 포맷", "type": "main", "index": 0 }]
-      ]
+    "3a. WAIT_FOR_SYNC 설정 (L1~L3)": {
+      "main": [[{ "node": "4a. HMN 대기 알림", "type": "main", "index": 0 }]]
     },
-    "3. 메시지 포맷": {
-      "main": [
-        [
-          { "node": "4a. Discord 알림", "type": "main", "index": 0 },
-          { "node": "4b. 카카오톡 알림", "type": "main", "index": 0 },
-          { "node": "4c. 이메일 알림", "type": "main", "index": 0 },
-          { "node": "5. HMN 응답 대기", "type": "main", "index": 0 }
-        ]
-      ]
+    "4a. HMN 대기 알림": {
+      "main": [[{ "node": "5a. 응답(HMN 경로)", "type": "main", "index": 0 }]]
     },
-    "5. HMN 응답 대기": {
-      "main": [
-        [{ "node": "6. 승인 확인 — Supabase 업데이트", "type": "main", "index": 0 }]
-      ]
+    "3b. 자동 승인 처리 (L4~L5)": {
+      "main": [[{ "node": "4b. 자동처리 알림", "type": "main", "index": 0 }]]
     },
-    "6. 승인 확인 — Supabase 업데이트": {
-      "main": [
-        [{ "node": "7. 결정 결과 포맷", "type": "main", "index": 0 }]
-      ]
-    },
-    "7. 결정 결과 포맷": {
-      "main": [
-        [
-          { "node": "8a. Discord 결과", "type": "main", "index": 0 },
-          { "node": "8b. 카카오톡 결과", "type": "main", "index": 0 },
-          { "node": "8c. 이메일 결과", "type": "main", "index": 0 }
-        ]
-      ]
+    "4b. 자동처리 알림": {
+      "main": [[{ "node": "5b. 응답(자동 경로)", "type": "main", "index": 0 }]]
     }
   },
   "settings": {
@@ -325,7 +174,7 @@
   },
   "tags": [
     { "name": "세종OS" },
-    { "name": "WAIT_FOR_SYNC" },
-    { "name": "알림" }
+    { "name": "WF1" },
+    { "name": "LEVEL_ROUTING" }
   ]
 }

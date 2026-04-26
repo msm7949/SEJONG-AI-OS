@@ -5,18 +5,6 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 type Mode = 'DEV' | 'STG' | 'PROD';
 type Level = 1 | 2 | 3 | 4 | 5;
 
-function makeRecordId(aiCode: string) {
-  const now = new Date();
-  const y = now.getFullYear().toString();
-  const m = (now.getMonth() + 1).toString().padStart(2, '0');
-  const d = now.getDate().toString().padStart(2, '0');
-  const hh = now.getHours().toString().padStart(2, '0');
-  const mm = now.getMinutes().toString().padStart(2, '0');
-  const ss = now.getSeconds().toString().padStart(2, '0');
-  const seq = Math.floor(Math.random() * 900 + 100).toString();
-  return `SEJONG-${aiCode}-${y}${m}${d}-${hh}${mm}${ss}-${seq}`;
-}
-
 export default function ChatPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -34,19 +22,16 @@ export default function ChatPage() {
     if (!supabase || !canSubmit || submitting) return;
 
     const aiCode = 'CSR';
-    const recordId = makeRecordId(aiCode);
     setSubmitting(true);
     setSubmitMessage(null);
 
-    const { error } = await supabase.from('records').insert({
-      record_id: recordId,
-      ai_code: aiCode,
-      level,
-      mode,
-      title: title.trim(),
-      content: content.trim(),
-      status: 'WAIT_FOR_SYNC',
-      metadata: { source: 'chat-page', submitted_by: 'HMN' },
+    const { data, error } = await supabase.rpc('create_record_from_chat', {
+      p_ai_code: aiCode,
+      p_level: level,
+      p_mode: mode,
+      p_title: title.trim(),
+      p_content: content.trim(),
+      p_metadata: { source: 'chat-page', submitted_by: 'HMN' },
     });
 
     if (error) {
@@ -55,7 +40,14 @@ export default function ChatPage() {
       return;
     }
 
-    setLastRecordId(recordId);
+    const result = data as { success?: boolean; record_id?: string; error?: string } | null;
+    if (!result?.success || !result.record_id) {
+      setSubmitMessage(`저장 실패: ${result?.error ?? 'RPC 결과가 올바르지 않습니다.'}`);
+      setSubmitting(false);
+      return;
+    }
+
+    setLastRecordId(result.record_id);
     setSubmitMessage('저장 완료: WAIT_FOR_SYNC로 접수되었습니다. WF1 트리거가 자동 실행됩니다.');
     setTitle('');
     setContent('');
