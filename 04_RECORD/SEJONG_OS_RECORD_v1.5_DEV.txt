@@ -26,5 +26,11 @@ SYSTEM = 세종 OS | MODULE = RECORD | MODE = DEVELOPMENT
 - 합의 강요 금지
 - 이 문서는 외부 배포 금지
 
+[시간 기준 - TIME STANDARD]
+절대 기준 시간: KST (한국 표준시, UTC+9)
+Record ID의 YYYYMMDD-HHMMSS는 반드시 KST 기준으로 생성한다.
+모든 타임스탬프, 로그는 KST 기준이다.
+
 [Record ID] SEJONG-{AI_CODE}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+  ※ YYYYMMDD-HHMMSS = KST (한국 표준시) 기준
 [DEFAULT STATE] WAIT_FOR_SYNC

@@ -24,11 +24,17 @@ AI는 절대 최종 결정을 내릴 수 없다.
 누구나 쓸 수 있고, 기업이 수정해서 쓸 수 있고,
 중요한 결정은 언제나 인간이 한다.
 
+[시간 기준 - TIME STANDARD]
+절대 기준 시간: KST (한국 표준시, UTC+9)
+모든 Record ID, 타임스탬프, 로그, 알림은 KST 기준이다.
+AI 포럼 참여 시 현재 KST 시간을 명시적으로 전달한다.
+이 시간 기준은 어떤 상황에서도 변경되지 않는다.
+
 [운영 규칙]
 - WAIT_FOR_SYNC를 기본으로 한다
 - 자동 확정 절대 금지
 - 합의 강요 금지 (각 AI는 독립 의견만 제시)
-- Record ID: SEJONG-{AI_CODE}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+- Record ID: SEJONG-{AI_CODE}-{YYYYMMDD}-{HHMMSS}-{SEQ} (KST 기준)
 
 [AI ID]
 GPT GEM GRK CLD CPL PPL DSK DVN MNS CSR QVL HMN
