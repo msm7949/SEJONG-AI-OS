@@ -1,6 +1,67 @@
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
+
+type Mode = 'DEV' | 'STG' | 'PROD';
+type Level = 1 | 2 | 3 | 4 | 5;
+
+function makeRecordId(aiCode: string) {
+  const now = new Date();
+  const y = now.getFullYear().toString();
+  const m = (now.getMonth() + 1).toString().padStart(2, '0');
+  const d = now.getDate().toString().padStart(2, '0');
+  const hh = now.getHours().toString().padStart(2, '0');
+  const mm = now.getMinutes().toString().padStart(2, '0');
+  const ss = now.getSeconds().toString().padStart(2, '0');
+  const seq = Math.floor(Math.random() * 900 + 100).toString();
+  return `SEJONG-${aiCode}-${y}${m}${d}-${hh}${mm}${ss}-${seq}`;
+}
 
 export default function ChatPage() {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [mode, setMode] = useState<Mode>('DEV');
+  const [level, setLevel] = useState<Level>(3);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+  const [lastRecordId, setLastRecordId] = useState<string | null>(null);
+  const canSubmit = useMemo(
+    () => title.trim().length > 0 && content.trim().length > 0 && isSupabaseConfigured,
+    [title, content]
+  );
+
+  const submitRecord = async () => {
+    if (!supabase || !canSubmit || submitting) return;
+
+    const aiCode = 'CSR';
+    const recordId = makeRecordId(aiCode);
+    setSubmitting(true);
+    setSubmitMessage(null);
+
+    const { error } = await supabase.from('records').insert({
+      record_id: recordId,
+      ai_code: aiCode,
+      level,
+      mode,
+      title: title.trim(),
+      content: content.trim(),
+      status: 'WAIT_FOR_SYNC',
+      metadata: { source: 'chat-page', submitted_by: 'HMN' },
+    });
+
+    if (error) {
+      setSubmitMessage(`저장 실패: ${error.message}`);
+      setSubmitting(false);
+      return;
+    }
+
+    setLastRecordId(recordId);
+    setSubmitMessage('저장 완료: WAIT_FOR_SYNC로 접수되었습니다. WF1 트리거가 자동 실행됩니다.');
+    setTitle('');
+    setContent('');
+    setSubmitting(false);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="mb-6">
@@ -20,18 +81,68 @@ export default function ChatPage() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6">
-        <label className="block text-sm font-medium text-slate-700 mb-2">
-          안건 초안 입력
-        </label>
-        <textarea
-          rows={8}
-          readOnly
-          placeholder="이 화면은 대화 중심 레이아웃입니다. 실제 AI 입력창(통합 모듈)은 다음 단계에서 연결합니다."
-          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-500"
+        <label className="block text-sm font-medium text-slate-700 mb-2">안건 제목</label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="예: 승인 화면 상세 모달 추가"
+          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
-        <p className="mt-2 text-xs text-slate-400">
-          현재 단계: 대화창을 1순위 진입점으로 배치 완료
-        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">모드</label>
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value as Mode)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="DEV">DEV</option>
+              <option value="STG">STG</option>
+              <option value="PROD">PROD</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">레벨</label>
+            <select
+              value={level}
+              onChange={(e) => setLevel(Number(e.target.value) as Level)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value={1}>L1 Critical</option>
+              <option value={2}>L2 High</option>
+              <option value={3}>L3 Medium</option>
+              <option value={4}>L4 Low</option>
+              <option value={5}>L5 Routine</option>
+            </select>
+          </div>
+        </div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">안건 내용</label>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={8}
+          placeholder="요청 배경, 목표, 조건, 기대 결과를 입력하세요."
+          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={submitRecord}
+            disabled={!canSubmit || submitting}
+            className="px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting ? '저장 중...' : 'WAIT_FOR_SYNC로 접수'}
+          </button>
+          <span className={`text-xs ${isSupabaseConfigured ? 'text-emerald-600' : 'text-amber-600'}`}>
+            {isSupabaseConfigured ? 'Supabase 연결됨' : 'Supabase 미설정'}
+          </span>
+        </div>
+        {submitMessage && (
+          <p className="mt-2 text-xs text-slate-600">{submitMessage}</p>
+        )}
+        {lastRecordId && (
+          <p className="mt-1 text-xs text-slate-500 font-mono">record_id: {lastRecordId}</p>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3">
