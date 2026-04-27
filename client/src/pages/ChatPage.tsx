@@ -23,6 +23,7 @@ interface ChatMessage {
   created_at: string;
   ai_code: 'CLD' | 'DVN' | 'CSR';
   status: 'WAIT_FOR_SYNC' | 'DONE';
+  user_id?: string;
 }
 
 interface HealthState {
@@ -187,6 +188,21 @@ export default function ChatPage() {
     if (!activeSessionId && parsed.length > 0) setActiveSessionId(parsed[0].id);
   };
 
+  const getCurrentUserId = async (): Promise<string> => {
+    if (!supabase || !isSupabaseConfigured) {
+      return 'local-dev-user';
+    }
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      throw new Error(`인증 사용자 조회 실패: ${error.message}`);
+    }
+    const userId = data.user?.id;
+    if (!userId) {
+      throw new Error('로그인 세션이 없습니다. 다시 로그인 후 시도하세요.');
+    }
+    return userId;
+  };
+
   const loadMessages = async (sessionId: string) => {
     if (!supabase || !isSupabaseConfigured) return;
     const { data } = await supabase
@@ -214,15 +230,25 @@ export default function ChatPage() {
       setIsCreatingSession(false);
       return localSession;
     }
+    const userId = await getCurrentUserId();
     const { data, error } = await supabase
       .from('sessions')
       .insert({
+        user_id: userId,
         title: '새 대화',
+        status: 'draft',
       })
       .select('*')
       .single();
     setIsCreatingSession(false);
     if (error || !data) {
+      if (import.meta.env.DEV) {
+        console.error('[session:create] failed', {
+          code: error?.code,
+          message: error?.message,
+          payloadKeys: ['user_id', 'title', 'status'],
+        });
+      }
       throw new Error(error?.message ?? '세션 생성 실패');
     }
     const created = {
@@ -237,7 +263,17 @@ export default function ChatPage() {
 
   const persistMessage = async (message: Omit<ChatMessage, 'id'>) => {
     if (!supabase || !isSupabaseConfigured) return;
-    await supabase.from('chat_messages').insert(message);
+    const { error } = await supabase.from('chat_messages').insert(message);
+    if (error) {
+      if (import.meta.env.DEV) {
+        console.error('[message:insert] failed', {
+          code: error.code,
+          message: error.message,
+          payloadKeys: Object.keys(message),
+        });
+      }
+      throw new Error(error.message);
+    }
   };
 
   const updateSessionTitle = async (sessionId: string, title: string) => {
@@ -367,7 +403,9 @@ export default function ChatPage() {
     try {
       const session = await ensureActiveSession();
       console.log('[submit] ensureActiveSession result=', session.id);
+      const userId = await getCurrentUserId();
       const optimistic = appendOptimisticUserMessage(session.id, userText);
+      optimistic.user_id = userId;
       console.log('[submit] persistUserMessage start');
       await persistUserMessage({ ...optimistic });
 
@@ -396,7 +434,11 @@ export default function ChatPage() {
       console.log('[submit] done');
     } catch (error) {
       const message = error instanceof Error ? error.message : '전송 실패';
-      setChatError(`전송 실패: ${message}`);
+      if (message.includes('row-level security') || message.includes('permission')) {
+        setChatError('세션 생성 권한 오류: Supabase 정책을 확인하세요');
+      } else {
+        setChatError(`전송 실패: ${message}`);
+      }
       setComposerAvailability('연결 확인 필요');
       console.error('[submit] failed', error);
     } finally {
