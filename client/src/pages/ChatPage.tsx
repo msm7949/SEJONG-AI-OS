@@ -1,156 +1,432 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
-type Mode = 'DEV' | 'STG' | 'PROD';
-type Level = 1 | 2 | 3 | 4 | 5;
+type SessionGroup = '오늘' | '어제' | '이번주';
+type MessageRole = 'HMN' | 'AI';
+type ServiceStatus = 'UP' | 'DOWN' | 'CHECKING';
+
+interface ChatSession {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ChatMessage {
+  id: string;
+  session_id: string;
+  role: MessageRole;
+  content: string;
+  created_at: string;
+  ai_code: 'CLD' | 'DVN' | 'CSR';
+  status: 'WAIT_FOR_SYNC' | 'DONE';
+}
+
+interface HealthState {
+  proxy: ServiceStatus;
+  lmStudio: ServiceStatus;
+  nim: ServiceStatus;
+}
+
+const PROXY_URL = 'http://127.0.0.1:8082';
+const LM_URL = 'http://127.0.0.1:8080';
+const DEFAULT_MODEL = 'claude-3-5-sonnet-20241022';
+
+function formatTime(value: string): string {
+  return new Date(value).toLocaleString('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function groupSessions(sessions: ChatSession[]): Record<SessionGroup, ChatSession[]> {
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startYesterday = new Date(startToday);
+  startYesterday.setDate(startYesterday.getDate() - 1);
+  const startWeek = new Date(startToday);
+  startWeek.setDate(startWeek.getDate() - 7);
+
+  const grouped: Record<SessionGroup, ChatSession[]> = { 오늘: [], 어제: [], 이번주: [] };
+  for (const session of sessions) {
+    const updated = new Date(session.updated_at);
+    if (updated >= startToday) {
+      grouped.오늘.push(session);
+    } else if (updated >= startYesterday) {
+      grouped.어제.push(session);
+    } else if (updated >= startWeek) {
+      grouped.이번주.push(session);
+    }
+  }
+  return grouped;
+}
+
+async function fetchHealth(url: string, opts?: RequestInit): Promise<ServiceStatus> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const response = await fetch(url, { ...opts, signal: controller.signal });
+    return response.ok ? 'UP' : 'DOWN';
+  } catch {
+    return 'DOWN';
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function requestAiReply(prompt: string): Promise<{ text: string; aiCode: 'CLD' | 'DVN' | 'CSR' }> {
+  const response = await fetch(`${PROXY_URL}/v1/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'freecc',
+    },
+    body: JSON.stringify({
+      model: DEFAULT_MODEL,
+      max_tokens: 512,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`AI 응답 실패: ${response.status}`);
+  }
+
+  const text = await response.text();
+  const lines = text.split('\n').filter((line) => line.startsWith('data: '));
+
+  let aiModel = '';
+  let output = '';
+  for (const line of lines) {
+    const payload = line.slice(6).trim();
+    if (!payload || payload === '[DONE]') continue;
+    try {
+      const json = JSON.parse(payload) as Record<string, unknown>;
+      if (json.type === 'message_start' && typeof json.message === 'object' && json.message) {
+        const model = (json.message as { model?: string }).model;
+        if (model) aiModel = model;
+      }
+      if (
+        json.type === 'content_block_delta' &&
+        typeof json.delta === 'object' &&
+        json.delta &&
+        (json.delta as { type?: string }).type === 'text_delta'
+      ) {
+        output += (json.delta as { text?: string }).text ?? '';
+      }
+    } catch {
+      // ignore malformed event line
+    }
+  }
+
+  const aiCode: 'CLD' | 'DVN' | 'CSR' = aiModel.includes('glm') ? 'CSR' : 'CLD';
+  return { text: output.trim() || '응답 텍스트가 비어 있습니다.', aiCode };
+}
 
 export default function ChatPage() {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [mode, setMode] = useState<Mode>('DEV');
-  const [level, setLevel] = useState<Level>(3);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
-  const [lastRecordId, setLastRecordId] = useState<string | null>(null);
-  const canSubmit = useMemo(
-    () => title.trim().length > 0 && content.trim().length > 0 && isSupabaseConfigured,
-    [title, content]
-  );
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [health, setHealth] = useState<HealthState>({
+    proxy: 'CHECKING',
+    lmStudio: 'CHECKING',
+    nim: 'CHECKING',
+  });
 
-  const submitRecord = async () => {
-    if (!supabase || !canSubmit || submitting) return;
+  const grouped = useMemo(() => groupSessions(sessions), [sessions]);
+  const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null;
 
-    const aiCode = 'CSR';
-    setSubmitting(true);
-    setSubmitMessage(null);
+  const loadSessions = async () => {
+    if (!supabase || !isSupabaseConfigured) return;
+    const { data } = await supabase
+      .from('sessions')
+      .select('*')
+      .order('updated_at', { ascending: false });
+    if (!data) return;
+    const parsed = data as ChatSession[];
+    setSessions(parsed);
+    if (!activeSessionId && parsed.length > 0) setActiveSessionId(parsed[0].id);
+  };
 
-    const { data, error } = await supabase.rpc('create_record_from_chat', {
-      p_ai_code: aiCode,
-      p_level: level,
-      p_mode: mode,
-      p_title: title.trim(),
-      p_content: content.trim(),
-      p_metadata: { source: 'chat-page', submitted_by: 'HMN' },
+  const loadMessages = async (sessionId: string) => {
+    if (!supabase || !isSupabaseConfigured) return;
+    const { data } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true });
+    setMessages((data as ChatMessage[]) ?? []);
+  };
+
+  const createSession = async () => {
+    if (!supabase || !isSupabaseConfigured) return;
+    const { data } = await supabase
+      .from('sessions')
+      .insert({
+        title: '새 대화',
+      })
+      .select('*')
+      .single();
+    if (!data) return;
+    const created = data as ChatSession;
+    setSessions((prev) => [created, ...prev]);
+    setActiveSessionId(created.id);
+    setMessages([]);
+  };
+
+  const persistMessage = async (message: Omit<ChatMessage, 'id'>) => {
+    if (!supabase || !isSupabaseConfigured) return;
+    await supabase.from('chat_messages').insert(message);
+  };
+
+  const updateSessionTitle = async (sessionId: string, title: string) => {
+    if (!supabase || !isSupabaseConfigured) return;
+    await supabase.from('sessions').update({ title }).eq('id', sessionId);
+  };
+
+  const runHealthCheck = async () => {
+    const proxy = await fetchHealth(`${PROXY_URL}/v1/models`);
+    const lmStudio = await fetchHealth(`${LM_URL}/v1/models`);
+    const nim = await fetchHealth(`${PROXY_URL}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'freecc',
+      },
+      body: JSON.stringify({
+        model: 'claude-3-opus-20240229',
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'ping' }],
+      }),
     });
+    setHealth({ proxy, lmStudio, nim });
+  };
 
-    if (error) {
-      setSubmitMessage(`저장 실패: ${error.message}`);
-      setSubmitting(false);
-      return;
+  useEffect(() => {
+    void loadSessions();
+    void runHealthCheck();
+    const interval = setInterval(() => {
+      void runHealthCheck();
+    }, 30000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!activeSessionId) return;
+    void loadMessages(activeSessionId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSessionId]);
+
+  const sendMessage = async () => {
+    if (!activeSessionId || !input.trim() || sending) return;
+    const text = input.trim();
+    setInput('');
+    setSending(true);
+
+    const now = new Date().toISOString();
+    const hmnMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      session_id: activeSessionId,
+      role: 'HMN',
+      content: text,
+      created_at: now,
+      ai_code: 'CSR',
+      status: 'DONE',
+    };
+    setMessages((prev) => [...prev, hmnMessage]);
+    void persistMessage({ ...hmnMessage });
+
+    if (activeSession?.title === '새 대화') {
+      const generatedTitle = text.slice(0, 20);
+      void updateSessionTitle(activeSessionId, generatedTitle);
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === activeSessionId
+            ? { ...session, title: generatedTitle, updated_at: new Date().toISOString() }
+            : session
+        )
+      );
     }
 
-    const result = data as { success?: boolean; record_id?: string; error?: string } | null;
-    if (!result?.success || !result.record_id) {
-      setSubmitMessage(`저장 실패: ${result?.error ?? 'RPC 결과가 올바르지 않습니다.'}`);
-      setSubmitting(false);
-      return;
+    try {
+      const ai = await requestAiReply(text);
+      const aiMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        session_id: activeSessionId,
+        role: 'AI',
+        content: ai.text,
+        created_at: new Date().toISOString(),
+        ai_code: ai.aiCode,
+        status: 'WAIT_FOR_SYNC',
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+      await persistMessage({ ...aiMessage });
+    } catch (error) {
+      const aiMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        session_id: activeSessionId,
+        role: 'AI',
+        content: error instanceof Error ? error.message : '응답 중 오류가 발생했습니다.',
+        created_at: new Date().toISOString(),
+        ai_code: 'CSR',
+        status: 'WAIT_FOR_SYNC',
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+    } finally {
+      setSending(false);
     }
+  };
 
-    setLastRecordId(result.record_id);
-    setSubmitMessage('저장 완료: WAIT_FOR_SYNC로 접수되었습니다. WF1 트리거가 자동 실행됩니다.');
-    setTitle('');
-    setContent('');
-    setSubmitting(false);
+  const statusColor = (status: ServiceStatus) => {
+    if (status === 'UP') return 'text-emerald-600';
+    if (status === 'DOWN') return 'text-rose-500';
+    return 'text-slate-500';
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">AI 대화창</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          AI 중심 운영을 위한 1순위 인터페이스. 숙의 후 최종 결정은 HMN 승인에서 진행합니다.
-        </p>
-      </div>
-
-      <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6">
-        <p className="text-sm font-semibold text-slate-900 mb-2">입력 가이드</p>
-        <ul className="text-sm text-slate-600 space-y-1">
-          <li>- 안건 제목, 핵심 내용, 원하는 결과를 먼저 적으세요.</li>
-          <li>- 필요하면 `record_id`를 함께 넣어 맥락을 이어가세요.</li>
-          <li>- 확정이 필요하면 HMN 승인 화면으로 이동해 최종 처리하세요.</li>
-        </ul>
-      </div>
-
-      <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6">
-        <label className="block text-sm font-medium text-slate-700 mb-2">안건 제목</label>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="예: 승인 화면 상세 모달 추가"
-          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">모드</label>
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value as Mode)}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    <div className="h-[calc(100vh-4rem)] flex bg-slate-100">
+      <aside
+        className={`fixed z-20 md:static top-16 left-0 h-[calc(100vh-4rem)] w-[220px] bg-white border-r border-slate-200 transform transition-transform ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        <div className="h-full flex flex-col">
+          <div className="px-4 py-4 border-b border-slate-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-[#534AB7] text-white flex items-center justify-center font-bold">世</div>
+              <span className="font-semibold text-slate-900">세종 OS</span>
+            </div>
+            <button
+              onClick={() => void createSession()}
+              className="w-full py-2 rounded-lg bg-slate-900 text-white text-sm hover:bg-slate-800 transition-colors"
             >
-              <option value="DEV">DEV</option>
-              <option value="STG">STG</option>
-              <option value="PROD">PROD</option>
-            </select>
+              새 대화
+            </button>
           </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">레벨</label>
-            <select
-              value={level}
-              onChange={(e) => setLevel(Number(e.target.value) as Level)}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value={1}>L1 Critical</option>
-              <option value={2}>L2 High</option>
-              <option value={3}>L3 Medium</option>
-              <option value={4}>L4 Low</option>
-              <option value={5}>L5 Routine</option>
-            </select>
+          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+            {(Object.keys(grouped) as SessionGroup[]).map((group) => (
+              <div key={group}>
+                <p className="px-2 text-xs font-semibold text-slate-500 mb-1">{group}</p>
+                <div className="space-y-1">
+                  {grouped[group].map((session) => (
+                    <button
+                      key={session.id}
+                      onClick={() => {
+                        setActiveSessionId(session.id);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full text-left px-2 py-2 rounded-md text-sm truncate ${
+                        activeSessionId === session.id
+                          ? 'bg-[#EEF0FF] text-[#534AB7] font-medium'
+                          : 'text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      {session.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <label className="block text-sm font-medium text-slate-700 mb-2">안건 내용</label>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={8}
-          placeholder="요청 배경, 목표, 조건, 기대 결과를 입력하세요."
-          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={submitRecord}
-            disabled={!canSubmit || submitting}
-            className="px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      </aside>
+
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="h-14 bg-white border-b border-slate-200 px-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              className="md:hidden px-2 py-1 border border-slate-200 rounded text-slate-600"
+              onClick={() => setSidebarOpen((prev) => !prev)}
+            >
+              ☰
+            </button>
+            <h1 className="text-sm sm:text-base font-semibold text-slate-900 truncate">
+              {activeSession?.title ?? '세션을 선택하세요'}
+            </h1>
+          </div>
+          <Link
+            to="/approve"
+            className="px-3 py-1.5 rounded-md text-sm font-semibold text-white bg-[#534AB7] hover:bg-[#4A42A6]"
           >
-            {submitting ? '저장 중...' : 'WAIT_FOR_SYNC로 접수'}
-          </button>
-          <span className={`text-xs ${isSupabaseConfigured ? 'text-emerald-600' : 'text-amber-600'}`}>
-            {isSupabaseConfigured ? 'Supabase 연결됨' : 'Supabase 미설정'}
-          </span>
-        </div>
-        {submitMessage && (
-          <p className="mt-2 text-xs text-slate-600">{submitMessage}</p>
-        )}
-        {lastRecordId && (
-          <p className="mt-1 text-xs text-slate-500 font-mono">record_id: {lastRecordId}</p>
-        )}
-      </div>
+            HMN 승인
+          </Link>
+        </header>
 
-      <div className="flex flex-wrap gap-3">
-        <Link
-          to="/approve"
-          className="px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
-        >
-          HMN 승인으로 이동
-        </Link>
-        <Link
-          to="/dashboard"
-          className="px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-100 transition-colors"
-        >
-          대시보드 보기
-        </Link>
-      </div>
+        <section className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          {messages.length === 0 ? (
+            <div className="text-sm text-slate-500">대화를 시작해 주세요.</div>
+          ) : (
+            messages.map((message) => (
+              <div key={message.id} className={`flex ${message.role === 'HMN' ? 'justify-end' : 'justify-start'}`}>
+                <div className="max-w-[90%] sm:max-w-[70%]">
+                  {message.role === 'AI' && (
+                    <div className="mb-1 text-xs text-slate-500 flex items-center gap-2">
+                      <span className="inline-flex w-5 h-5 rounded-full bg-slate-900 text-white items-center justify-center text-[10px]">世</span>
+                      <span>{message.ai_code}</span>
+                      <span>{formatTime(message.created_at)}</span>
+                    </div>
+                  )}
+                  <div
+                    className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                      message.role === 'HMN'
+                        ? 'bg-[#534AB7] text-white rounded-br-md'
+                        : 'bg-white border border-slate-200 text-slate-800 rounded-bl-md'
+                    }`}
+                  >
+                    {message.content}
+                  </div>
+                  {message.role === 'AI' && message.status === 'WAIT_FOR_SYNC' && (
+                    <div className="mt-1">
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-800">
+                        WAIT_FOR_SYNC
+                      </span>
+                    </div>
+                  )}
+                  {message.role === 'HMN' && (
+                    <div className="mt-1 text-xs text-right text-slate-500">{formatTime(message.created_at)}</div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </section>
+
+        <div className="bg-white border-t border-slate-200 p-3 sm:p-4">
+          <div className="flex items-end gap-2">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              rows={3}
+              placeholder="메시지를 입력하세요..."
+              className="flex-1 resize-none border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+            />
+            <button
+              onClick={() => void sendMessage()}
+              disabled={sending || !activeSessionId || !input.trim()}
+              className="w-10 h-10 shrink-0 rounded-full bg-[#534AB7] text-white disabled:opacity-40"
+              aria-label="전송"
+            >
+              ↑
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            WAIT_FOR_SYNC 원칙 유지 · 최종 결정은 HMN 승인에서
+          </p>
+        </div>
+
+        <footer className="h-9 bg-slate-900 text-slate-200 px-4 text-xs flex items-center gap-4">
+          <span className={statusColor(health.proxy)}>8082 Proxy: {health.proxy}</span>
+          <span className={statusColor(health.lmStudio)}>LM Studio: {health.lmStudio}</span>
+          <span className={statusColor(health.nim)}>NIM: {health.nim}</span>
+        </footer>
+      </main>
     </div>
   );
 }
