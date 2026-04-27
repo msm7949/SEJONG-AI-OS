@@ -134,6 +134,8 @@ export default function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [composerValue, setComposerValue] = useState('');
+  const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isAwaitingApproval, setIsAwaitingApproval] = useState(false);
@@ -149,11 +151,15 @@ export default function ChatPage() {
   const grouped = useMemo(() => groupSessions(sessions), [sessions]);
   const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null;
   const isComposerEmpty = composerValue.trim().length === 0;
-  const submitDisabled = isSendingMessage || isCreatingSession || isComposerEmpty;
+  const submitDisabled = isSendingMessage || isCreatingSession || !authReady || !currentUserId || isComposerEmpty;
   const submitDisabledReason = isSendingMessage
     ? '전송 중'
     : isCreatingSession
       ? '세션 생성 중'
+      : !authReady
+        ? '인증 확인 중'
+        : !currentUserId
+          ? '로그인 세션 없음'
       : isComposerEmpty
         ? '입력 대기 중'
         : null;
@@ -202,6 +208,56 @@ export default function ChatPage() {
     }
     return userId;
   };
+
+  useEffect(() => {
+    const sb = supabase;
+    if (!sb || !isSupabaseConfigured) {
+      setAuthReady(true);
+      setCurrentUserId('local-dev-user');
+      return;
+    }
+
+    let mounted = true;
+    const initAuth = async () => {
+      const { data: sessionData } = await sb.auth.getSession();
+      if (import.meta.env.DEV) {
+        console.log('[auth] session', sessionData.session);
+      }
+
+      const { data: userData, error: userError } = await sb.auth.getUser();
+      if (import.meta.env.DEV) {
+        console.log('[auth] user', userData.user, userError);
+      }
+
+      if (!mounted) return;
+      if (userError || !userData.user?.id) {
+        setCurrentUserId(null);
+        setChatError('로그인 세션이 없습니다. 다시 로그인 후 시도해주세요.');
+      } else {
+        setCurrentUserId(userData.user.id);
+        setChatError(null);
+      }
+      setAuthReady(true);
+    };
+
+    void initAuth();
+
+    const { data: authListener } = sb.auth.onAuthStateChange((_event, session) => {
+      const uid = session?.user?.id ?? null;
+      setCurrentUserId(uid);
+      setAuthReady(true);
+      if (!uid) {
+        setChatError('로그인 세션이 없습니다. 다시 로그인 후 시도해주세요.');
+      } else {
+        setChatError(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const loadMessages = async (sessionId: string) => {
     if (!supabase || !isSupabaseConfigured) return;
@@ -385,6 +441,16 @@ export default function ChatPage() {
     console.log('[submit] input=', composerValue);
     console.log('[submit] activeSessionId=', activeSessionId);
     console.log('[submit] disabledReason=', submitDisabledReason);
+    if (!authReady) {
+      setChatError('인증 상태 확인 중입니다. 잠시 후 다시 시도해주세요.');
+      console.log('[submit] early return: auth loading');
+      return;
+    }
+    if (!currentUserId) {
+      setChatError('로그인 세션이 없습니다. 다시 로그인 후 시도해주세요.');
+      console.log('[submit] early return: missing auth session');
+      return;
+    }
     if (!composerValue.trim()) {
       setComposerAvailability('입력 대기 중');
       console.log('[submit] early return: empty input');
