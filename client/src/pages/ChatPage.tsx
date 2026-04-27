@@ -11,6 +11,8 @@ interface ChatSession {
   title: string;
   created_at: string;
   updated_at: string;
+  latest_preview?: string;
+  latest_status?: 'WAIT_FOR_SYNC' | '초안' | '승인완료';
 }
 
 interface ChatMessage {
@@ -130,10 +132,14 @@ export default function ChatPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
+  const [composerValue, setComposerValue] = useState('');
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isAwaitingApproval, setIsAwaitingApproval] = useState(false);
+  const [composerBlockedReason, setComposerBlockedReason] = useState<string | null>('입력 대기 중');
+  const [chatError, setChatError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [health, setHealth] = useState<HealthState>({
+  const [systemHealth, setSystemHealth] = useState<HealthState>({
     proxy: 'CHECKING',
     lmStudio: 'CHECKING',
     nim: 'CHECKING',
@@ -141,6 +147,15 @@ export default function ChatPage() {
 
   const grouped = useMemo(() => groupSessions(sessions), [sessions]);
   const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null;
+  const isComposerEmpty = composerValue.trim().length === 0;
+  const submitDisabled = isSendingMessage || isCreatingSession || isComposerEmpty;
+  const submitDisabledReason = isSendingMessage
+    ? '전송 중'
+    : isCreatingSession
+      ? '세션 생성 중'
+      : isComposerEmpty
+        ? '입력 대기 중'
+        : null;
 
   const loadSessions = async () => {
     if (!supabase || !isSupabaseConfigured) return;
@@ -149,7 +164,25 @@ export default function ChatPage() {
       .select('*')
       .order('updated_at', { ascending: false });
     if (!data) return;
-    const parsed = data as ChatSession[];
+    const parsed: ChatSession[] = (data as ChatSession[]).map((s) => ({
+      ...s,
+      latest_status: '초안',
+    }));
+    const { data: latestMessages } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    const latestBySession = new Map<string, ChatMessage>();
+    for (const msg of (latestMessages as ChatMessage[] | null) ?? []) {
+      if (!latestBySession.has(msg.session_id)) latestBySession.set(msg.session_id, msg);
+    }
+    for (const session of parsed) {
+      const latest = latestBySession.get(session.id);
+      if (!latest) continue;
+      session.latest_preview = latest.content;
+      session.latest_status = latest.status === 'WAIT_FOR_SYNC' ? 'WAIT_FOR_SYNC' : '초안';
+    }
     setSessions(parsed);
     if (!activeSessionId && parsed.length > 0) setActiveSessionId(parsed[0].id);
   };
@@ -164,20 +197,42 @@ export default function ChatPage() {
     setMessages((data as ChatMessage[]) ?? []);
   };
 
-  const createSession = async () => {
-    if (!supabase || !isSupabaseConfigured) return;
-    const { data } = await supabase
+  const createSession = async (): Promise<ChatSession> => {
+    setIsCreatingSession(true);
+    if (!supabase || !isSupabaseConfigured) {
+      const now = new Date().toISOString();
+      const localSession: ChatSession = {
+        id: crypto.randomUUID(),
+        title: '새 대화',
+        created_at: now,
+        updated_at: now,
+        latest_status: '초안',
+      };
+      setSessions((prev) => [localSession, ...prev]);
+      setActiveSessionId(localSession.id);
+      setMessages([]);
+      setIsCreatingSession(false);
+      return localSession;
+    }
+    const { data, error } = await supabase
       .from('sessions')
       .insert({
         title: '새 대화',
       })
       .select('*')
       .single();
-    if (!data) return;
-    const created = data as ChatSession;
+    setIsCreatingSession(false);
+    if (error || !data) {
+      throw new Error(error?.message ?? '세션 생성 실패');
+    }
+    const created = {
+      ...(data as ChatSession),
+      latest_status: '초안' as const,
+    };
     setSessions((prev) => [created, ...prev]);
     setActiveSessionId(created.id);
     setMessages([]);
+    return created;
   };
 
   const persistMessage = async (message: Omit<ChatMessage, 'id'>) => {
@@ -205,7 +260,11 @@ export default function ChatPage() {
         messages: [{ role: 'user', content: 'ping' }],
       }),
     });
-    setHealth({ proxy, lmStudio, nim });
+    setSystemHealth({ proxy, lmStudio, nim });
+  };
+
+  const setComposerAvailability = (nextReason: string | null) => {
+    setComposerBlockedReason(nextReason);
   };
 
   useEffect(() => {
@@ -224,63 +283,125 @@ export default function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSessionId]);
 
-  const sendMessage = async () => {
-    if (!activeSessionId || !input.trim() || sending) return;
-    const text = input.trim();
-    setInput('');
-    setSending(true);
+  const handleComposerChange = (value: string) => {
+    setComposerValue(value);
+    if (value.trim()) setComposerAvailability(null);
+    else setComposerAvailability('입력 대기 중');
+  };
 
-    const now = new Date().toISOString();
-    const hmnMessage: ChatMessage = {
+  const ensureActiveSession = async (): Promise<ChatSession> => {
+    if (activeSession) {
+      console.log('[submit] ensureActiveSession existing=', activeSession.id);
+      return activeSession;
+    }
+    console.log('[submit] ensureActiveSession createSession start');
+    return createSession();
+  };
+
+  const appendOptimisticUserMessage = (sessionId: string, text: string): ChatMessage => {
+    const optimistic: ChatMessage = {
       id: crypto.randomUUID(),
-      session_id: activeSessionId,
+      session_id: sessionId,
       role: 'HMN',
       content: text,
-      created_at: now,
+      created_at: new Date().toISOString(),
       ai_code: 'CSR',
       status: 'DONE',
     };
-    setMessages((prev) => [...prev, hmnMessage]);
-    void persistMessage({ ...hmnMessage });
+    setMessages((prev) => [...prev, optimistic]);
+    return optimistic;
+  };
 
-    if (activeSession?.title === '새 대화') {
-      const generatedTitle = text.slice(0, 20);
-      void updateSessionTitle(activeSessionId, generatedTitle);
-      setSessions((prev) =>
-        prev.map((session) =>
-          session.id === activeSessionId
-            ? { ...session, title: generatedTitle, updated_at: new Date().toISOString() }
-            : session
-        )
-      );
+  const persistUserMessage = async (message: Omit<ChatMessage, 'id'>) => {
+    await persistMessage(message);
+  };
+
+  const requestAssistantReply = async (sessionId: string, userText: string) => {
+    const ai = await requestAiReply(userText);
+    const aiMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      session_id: sessionId,
+      role: 'AI',
+      content: ai.text,
+      created_at: new Date().toISOString(),
+      ai_code: ai.aiCode,
+      status: 'WAIT_FOR_SYNC',
+    };
+    setMessages((prev) => [...prev, aiMessage]);
+    setIsAwaitingApproval(true);
+    await persistMessage({ ...aiMessage });
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === sessionId
+          ? {
+              ...session,
+              latest_preview: aiMessage.content,
+              latest_status: 'WAIT_FOR_SYNC',
+              updated_at: new Date().toISOString(),
+            }
+          : session
+      )
+    );
+  };
+
+  const handleSubmit = async () => {
+    console.log('[submit] start');
+    console.log('[submit] input=', composerValue);
+    console.log('[submit] activeSessionId=', activeSessionId);
+    console.log('[submit] disabledReason=', submitDisabledReason);
+    if (!composerValue.trim()) {
+      setComposerAvailability('입력 대기 중');
+      console.log('[submit] early return: empty input');
+      return;
     }
+    if (isSendingMessage || isCreatingSession) {
+      console.log('[submit] early return: busy');
+      return;
+    }
+    const userText = composerValue.trim();
+    setComposerValue('');
+    setChatError(null);
+    setIsSendingMessage(true);
+    setComposerAvailability('전송 중');
 
     try {
-      const ai = await requestAiReply(text);
-      const aiMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        session_id: activeSessionId,
-        role: 'AI',
-        content: ai.text,
-        created_at: new Date().toISOString(),
-        ai_code: ai.aiCode,
-        status: 'WAIT_FOR_SYNC',
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      await persistMessage({ ...aiMessage });
+      const session = await ensureActiveSession();
+      console.log('[submit] ensureActiveSession result=', session.id);
+      const optimistic = appendOptimisticUserMessage(session.id, userText);
+      console.log('[submit] persistUserMessage start');
+      await persistUserMessage({ ...optimistic });
+
+      const currentTitle =
+        sessions.find((s) => s.id === session.id)?.title ?? session.title;
+      if (currentTitle === '새 대화') {
+        const generatedTitle = userText.slice(0, 20);
+        void updateSessionTitle(session.id, generatedTitle);
+        setSessions((prev) =>
+          prev.map((item) =>
+            item.id === session.id
+              ? {
+                  ...item,
+                  title: generatedTitle,
+                  latest_preview: userText,
+                  latest_status: '초안',
+                  updated_at: new Date().toISOString(),
+                }
+              : item
+          )
+        );
+      }
+
+      await requestAssistantReply(session.id, userText);
+      setComposerAvailability(null);
+      console.log('[submit] done');
     } catch (error) {
-      const aiMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        session_id: activeSessionId,
-        role: 'AI',
-        content: error instanceof Error ? error.message : '응답 중 오류가 발생했습니다.',
-        created_at: new Date().toISOString(),
-        ai_code: 'CSR',
-        status: 'WAIT_FOR_SYNC',
-      };
-      setMessages((prev) => [...prev, aiMessage]);
+      const message = error instanceof Error ? error.message : '전송 실패';
+      setChatError(`전송 실패: ${message}`);
+      setComposerAvailability('연결 확인 필요');
+      console.error('[submit] failed', error);
     } finally {
-      setSending(false);
+      setIsSendingMessage(false);
+      if (!composerValue.trim()) setComposerAvailability('입력 대기 중');
     }
   };
 
@@ -328,7 +449,14 @@ export default function ChatPage() {
                           : 'text-slate-700 hover:bg-slate-100'
                       }`}
                     >
-                      {session.title}
+                      <div className="truncate">{session.title}</div>
+                      <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                        {session.latest_preview ?? '메시지 없음'}
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                        <span>{session.latest_status ?? '초안'}</span>
+                        <span>{formatTime(session.updated_at)}</span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -348,20 +476,41 @@ export default function ChatPage() {
               ☰
             </button>
             <h1 className="text-sm sm:text-base font-semibold text-slate-900 truncate">
-              {activeSession?.title ?? '세션을 선택하세요'}
+              {activeSession?.title ?? '새 대화를 시작하세요'}
             </h1>
           </div>
           <Link
             to="/approve"
-            className="px-3 py-1.5 rounded-md text-sm font-semibold text-white bg-[#534AB7] hover:bg-[#4A42A6]"
+            className={`px-3 py-1.5 rounded-md text-sm font-semibold ${
+              isAwaitingApproval
+                ? 'text-white bg-[#534AB7] hover:bg-[#4A42A6]'
+                : 'text-slate-500 bg-slate-200 hover:bg-slate-300'
+            }`}
           >
-            HMN 승인
+            {isAwaitingApproval ? '승인 대기' : '승인 불필요'}
           </Link>
         </header>
 
         <section className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {messages.length === 0 ? (
-            <div className="text-sm text-slate-500">대화를 시작해 주세요.</div>
+            <div className="max-w-xl rounded-xl border border-dashed border-slate-300 bg-white/70 p-6">
+              <h2 className="text-base font-semibold text-slate-900">새 대화를 시작하세요</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                메시지를 입력하면 새 세션이 자동으로 만들어집니다.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['운영 원칙 정리', '구조 설계 초안', 'HMN 승인 요청 초안'].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => handleComposerChange(preset)}
+                    className="px-3 py-1.5 rounded-full text-xs bg-[#EEF0FF] text-[#534AB7] hover:bg-[#dde2ff]"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
           ) : (
             messages.map((message) => (
               <div key={message.id} className={`flex ${message.role === 'HMN' ? 'justify-end' : 'justify-start'}`}>
@@ -399,32 +548,66 @@ export default function ChatPage() {
         </section>
 
         <div className="bg-white border-t border-slate-200 p-3 sm:p-4">
-          <div className="flex items-end gap-2">
+          <form
+            className="flex items-end gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSubmit();
+            }}
+          >
             <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+              value={composerValue}
+              onChange={(e) => handleComposerChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  console.log('[submit] trigger: enter');
+                  void handleSubmit();
+                }
+              }}
               rows={3}
-              placeholder="메시지를 입력하세요..."
+              placeholder="정책 초안 작성, 구조 설계, 승인 요청 등을 입력하세요"
               className="flex-1 resize-none border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
             />
             <button
-              onClick={() => void sendMessage()}
-              disabled={sending || !activeSessionId || !input.trim()}
+              type="submit"
+              onClick={() => console.log('[submit] trigger: click')}
+              disabled={submitDisabled}
               className="w-10 h-10 shrink-0 rounded-full bg-[#534AB7] text-white disabled:opacity-40"
               aria-label="전송"
             >
               ↑
             </button>
-          </div>
+          </form>
           <p className="mt-2 text-xs text-slate-500">
+            첫 메시지를 보내면 새 세션이 자동 생성됩니다
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
             WAIT_FOR_SYNC 원칙 유지 · 최종 결정은 HMN 승인에서
           </p>
+          {(composerBlockedReason || submitDisabledReason) && (
+            <p className="mt-1 text-xs text-amber-600">{composerBlockedReason ?? submitDisabledReason}</p>
+          )}
+          {submitDisabledReason && (
+            <p className="mt-1 text-[11px] text-slate-400">
+              submit 상태: {submitDisabledReason}
+            </p>
+          )}
+          {composerBlockedReason && !submitDisabledReason && (
+            <p className="mt-1 text-xs text-amber-600">{composerBlockedReason}</p>
+          )}
+          {isCreatingSession && (
+            <p className="mt-1 text-xs text-slate-500">세션 생성 중...</p>
+          )}
+          {chatError && (
+            <p className="mt-1 text-xs text-rose-600">{chatError}</p>
+          )}
         </div>
 
         <footer className="h-9 bg-slate-900 text-slate-200 px-4 text-xs flex items-center gap-4">
-          <span className={statusColor(health.proxy)}>8082 Proxy: {health.proxy}</span>
-          <span className={statusColor(health.lmStudio)}>LM Studio: {health.lmStudio}</span>
-          <span className={statusColor(health.nim)}>NIM: {health.nim}</span>
+          <span className={statusColor(systemHealth.proxy)}>8082 Proxy: {systemHealth.proxy}</span>
+          <span className={statusColor(systemHealth.lmStudio)}>LM Studio: {systemHealth.lmStudio}</span>
+          <span className={statusColor(systemHealth.nim)}>NIM: {systemHealth.nim}</span>
         </footer>
       </main>
     </div>
